@@ -4,12 +4,7 @@ require_once __DIR__ . '/jwt.php';
 // ⚠️ Define JWT_SECRET como variable de entorno (mínimo 32 caracteres aleatorios).
 // Genera uno con: php -r "echo bin2hex(random_bytes(32));"
 // El valor de respaldo es SOLO para desarrollo local.
-$secret = getenv('JWT_SECRET');
-if (!$secret || strlen($secret) < 32) {
-    http_response_code(500);
-    exit('Configuración inválida: falta JWT_SECRET.');
-}
-define('JWT_SECRET', $secret);
+define('JWT_SECRET', getenv('JWT_SECRET') ?: 'pago_laNOCHEenSantaCLARINETE');
 define('JWT_COOKIE', 'jwt');
 define('JWT_TTL', 60 * 60 * 2); // 2 horas
 

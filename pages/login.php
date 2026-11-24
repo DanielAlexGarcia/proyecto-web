@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../php/auth/autenticacion.php';
-require_once __DIR__ . '../php/baseDatos/conexionBaseDatos.php';
+require_once __DIR__ . '/../php/baseDatos/conexionBaseDatos.php';
 
 $error = '';
 $cone = null;
@@ -15,7 +15,7 @@ try {
 
 function verificarUsuario(PDO $conexion, string $user, string $password)
 {
-    $sql = 'SELECT * FROM usuarios WHERE "user" = :u AND password = :p LIMIT 1';
+    $sql = 'SELECT * FROM usuarios WHERE `user` = :u AND `password` = :p LIMIT 1';
     $stmt = $conexion->prepare($sql);
     $stmt->execute([':u' => sha1(trim($user)), ':p' => sha1($password)]);
     return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -59,7 +59,7 @@ if ($cone && $_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$usuario) {
             $error = 'Correo electrónico o contraseña incorrectos.';
         } else {
-            $idPersona = (int)($usuario['iddocpac'] ?? 0);
+            $idPersona = (int)($usuario['idDocPac'] ?? 0);
 
             if ($tipoAcceso === 'paciente') {
                 $datos = $idPersona ? obtenerDatosPaciente($cone, $idPersona) : false;

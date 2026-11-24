@@ -65,6 +65,17 @@ function exigir(conexionBaseDatos $db, array $datos, array $requeridos): void
 // Enrutador
 // ---------------------------------------------------------------------------
 $tipo = $datos['tipo'] ?? '';
+$soloPersonal = ['persona', 'paciente', 'paciente_existente', 'paciente_transaccion',
+                 'empleado', 'empleado_existente', 'empleado_transaccion'];
+
+if ($u['tipo'] === 'paciente') {
+    if (in_array($tipo, $soloPersonal, true)) {
+        $db->responder(403, ['ok' => false, 'error' => 'No tienes permisos para esta acción.']);
+    }
+    if ($tipo === 'cita') {
+        $datos['paciente_id'] = $u['paciente_id']; // ignora lo que mande el cliente
+    }
+}
 
 try {
     switch ($tipo) {
