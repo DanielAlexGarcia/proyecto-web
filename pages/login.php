@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../php/auth/autenticacion.php';
-require_once('../php/baseDatos/conexionBaseDatos.php');
+require_once __DIR__ . '../php/baseDatos/conexionBaseDatos.php';
 
 $error = '';
 $cone = null;
@@ -13,60 +13,12 @@ try {
     error_log('[login] ' . $e->getMessage());
 }
 
-/** Detecta si la tabla de credenciales se llama `usuarios` o `users`. */
-function tablaCredenciales(PDO $conexion): ?string
-{
-    foreach (['usuarios', 'users'] as $tabla) {
-        $stmt = $conexion->query("SHOW TABLES LIKE " . $conexion->quote($tabla));
-        if ($stmt && $stmt->fetchColumn()) {
-            return $tabla;
-        }
-    }
-    return null;
-}
-
 function verificarUsuario(PDO $conexion, string $user, string $password)
 {
-    $tabla = tablaCredenciales($conexion);
-    if ($tabla === null) {
-        throw new RuntimeException('No existe la tabla de usuarios (usuarios/users).');
-    }
-
-    $sql = "SELECT * FROM `$tabla` WHERE user = SHA1(:u) AND password = SHA1(:p) LIMIT 1";
+    $sql = 'SELECT * FROM usuarios WHERE "user" = :u AND password = :p LIMIT 1';
     $stmt = $conexion->prepare($sql);
-    $stmt->execute([':u' => $user, ':p' => $password]);
-    $fila = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if ($fila) {
-        $fila['_tabla'] = $tabla;
-    }
-    return $fila;
-}
-
-/** Obtiene el id de la persona ligada al usuario. */
-function obtenerIdPersona(PDO $conexion, array $usuario): int
-{
-    // Columnas posibles que enlazan con personas.id
-    foreach (['idDocPac', 'id_persona', 'persona_id'] as $col) {
-        if (!empty($usuario[$col])) {
-            return (int) $usuario[$col];
-        }
-    }
-
-    // Respaldo: la tabla `users` solo guarda el nombre completo (como lo arma registro.php)
-    if (!empty($usuario['name'])) {
-        $stmt = $conexion->prepare(
-            "SELECT id FROM personas
-             WHERE TRIM(CONCAT_WS(' ', nombres, primer_apellido, segundo_apellido)) = :n
-             ORDER BY id DESC LIMIT 1"
-        );
-        $stmt->execute([':n' => trim($usuario['name'])]);
-        $id = $stmt->fetchColumn();
-        if ($id) {
-            return (int) $id;
-        }
-    }
-    return 0;
+    $stmt->execute([':u' => sha1(trim($user)), ':p' => sha1($password)]);
+    return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
 function obtenerDatosPaciente(PDO $conexion, int $idPersona)
@@ -107,7 +59,7 @@ if ($cone && $_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$usuario) {
             $error = 'Correo electrónico o contraseña incorrectos.';
         } else {
-            $idPersona = obtenerIdPersona($cone, $usuario);
+            $idPersona = (int)($usuario['iddocpac'] ?? 0);
 
             if ($tipoAcceso === 'paciente') {
                 $datos = $idPersona ? obtenerDatosPaciente($cone, $idPersona) : false;
@@ -151,8 +103,7 @@ if ($cone && $_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } catch (Throwable $e) {
         error_log('[login] ' . $e->getMessage());
-        // Temporal para depurar; quita el detalle cuando ya funcione:
-        $error = 'Error interno: ' . $e->getMessage();
+        $error = 'Ocurrió un error. Intenta de nuevo.';
     }
 }
 ?>

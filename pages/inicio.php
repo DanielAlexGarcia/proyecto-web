@@ -1,16 +1,9 @@
 <?php
-
-session_start();
-if(!$_SESSION['autenticado']){
-  header('location: ../index.html');
-  exit;
-}
-if (!isset($_SESSION['nameUser'])) {
-  header('Location: login.php'); // Cambia por el nombre de tu archivo de login
-  exit;
-}
-
+require_once __DIR__ . '/../php/auth/autenticacion.php';
+$u = requerirSesionPagina('paciente');
+$nombreUsuario = $u['nombre_completo'] ?? 'Paciente';
 ?>
+
 
 <!DOCTYPE html>
 <html lang="es">
