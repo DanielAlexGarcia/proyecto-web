@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../auth/autenticacion.php';
+$u = requerirSesionApi(['paciente', 'personal']); // o solo ['personal'] según el endpoint
 header('Content-Type: application/json; charset=utf-8');
 
 include_once('../baseDatos/conexionBaseDatos.php');

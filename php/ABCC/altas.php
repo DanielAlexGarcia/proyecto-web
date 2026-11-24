@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../auth/autenticacion.php';
+$u = requerirSesionApi(['paciente', 'personal']); // o solo ['personal'] según el endpoint
 // php/ABCC/altas.php
 // Endpoint de ALTAS. Recibe JSON por POST y responde JSON.
 // El campo "tipo" indica qué alta se realiza.
