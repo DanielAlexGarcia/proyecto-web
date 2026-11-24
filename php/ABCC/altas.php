@@ -22,6 +22,8 @@ require_once __DIR__ . '/../modelosDAO/pacienteDAO.php';
 require_once __DIR__ . '/../modelosDAO/empleadoDAO.php';
 require_once __DIR__ . '/../modelosDAO/citaDAO.php';
 
+$u = requerirSesionApi(['paciente', 'personal']);
+
 $db = new conexionBaseDatos();
 $pdo = $db->getConexion();
 
@@ -66,6 +68,18 @@ function exigir(conexionBaseDatos $db, array $datos, array $requeridos): void
 // Enrutador
 // ---------------------------------------------------------------------------
 $tipo = $datos['tipo'] ?? '';
+
+$soloPersonal = ['persona', 'paciente', 'paciente_existente', 'paciente_transaccion',
+                 'empleado', 'empleado_existente', 'empleado_transaccion'];
+
+if ($u['tipo'] === 'paciente') {
+    if (in_array($tipo, $soloPersonal, true)) {
+        $db->responder(403, ['ok' => false, 'error' => 'No tienes permisos para esta acción.']);
+    }
+    if ($tipo === 'cita') {
+        $datos['paciente_id'] = $u['paciente_id']; // ignora lo que mande el cliente
+    }
+}
 
 try {
     switch ($tipo) {

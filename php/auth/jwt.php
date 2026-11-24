@@ -44,7 +44,7 @@ class JWT
         if (!is_array($payload)) {
             throw new Exception('Payload inválido.');
         }
-        if (isset($payload['exp']) && time() >= (int)$payload['exp']) {
+        if (!isset($payload['exp']) || time() >= (int)$payload['exp']) {
             throw new Exception('Token expirado.');
         }
         return $payload;

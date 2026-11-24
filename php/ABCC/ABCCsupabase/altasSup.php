@@ -19,6 +19,8 @@ require_once __DIR__ . '/../../modelosDAO/modelosDAOSupabase/pacienteDAO.php';
 require_once __DIR__ . '/../../modelosDAO/modelosDAOSupabase/empleadoDAO.php';
 require_once __DIR__ . '/../../modelosDAO/modelosDAOSupabase/citaDAO.php';
 
+$u = requerirSesionApi(['paciente', 'personal']);
+
 $db = new conexionBaseDatos();
 $pdo = $db->getConexion();
 
