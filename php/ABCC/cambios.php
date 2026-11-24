@@ -19,7 +19,7 @@ $metodo = $_SERVER['REQUEST_METHOD'];
 
 // Para cambios completos, Persona y Cita requieren incluir su 'id'
 $estructuraDatos = [
-    0 => ['id','nombres', 'primerAP', 'segundoAP', 'fechaNaci', 'genero', 'Direccion'], // Persona    
+    0 => ['id', 'nombres', 'primerAP', 'segundoAP', 'fechaNaci', 'genero', 'Direccion'], // Persona    
     1 => ['personaID', 'cargo', 'especializacion', 'salario'],                                    // Empleado
     2 => ['personaID', 'numSeguro', 'grupSanginio', 'alergias'],                                  // Paciente
     3 => ['id', 'fechaHora', 'motivo', 'estado', 'pacienteID', 'doctorID']                        // Cita
@@ -52,7 +52,32 @@ if ($metodo === 'PUT') {
             'claves_recibidas' => $clavesRecibidas
         ]);
     }
+    // ---- Restricciones para pacientes ----
+    if ($u['tipo'] === 'paciente') {
+        if ($tipoEntidad !== 3) {
+            $cons->responder(403, ['error' => 'No tienes permisos para esta acción.']);
+        }
 
+        $citaActual = (new CitaDAO($conexion))->obtenerPorId((int) $datos['id']);
+
+        // 404 (no 403) para no revelar si la cita existe
+        if (!$citaActual || (int) $citaActual->getPacienteID() !== (int) $u['paciente_id']) {
+            $cons->responder(404, ['error' => 'Cita no encontrada.']);
+        }
+
+        // El cliente no decide a quién pertenece la cita
+        $datos['pacienteID'] = (int) $u['paciente_id'];
+
+        // Solo puede dejar el estado igual o cancelar
+        if ($datos['estado'] !== $citaActual->getEstado() && $datos['estado'] !== 'Cancelada') {
+            $cons->responder(403, ['error' => 'Estado no permitido.']);
+        }
+
+        // No se puede editar una cita ya cancelada
+        if (strtolower($citaActual->getEstado()) === 'cancelada') {
+            $cons->responder(409, ['error' => 'La cita ya está cancelada.']);
+        }
+    }
     try {
         $exito = false;
         $entidadNombre = '';

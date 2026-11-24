@@ -65,10 +65,26 @@ try {
 
 function verificarUsuario(PDO $conexion, string $user, string $password)
 {
-    $sql = 'SELECT * FROM usuarios WHERE `user` = :u AND `password` = :p LIMIT 1';
-    $stmt = $conexion->prepare($sql);
-    $stmt->execute([':u' => sha1(trim($user)), ':p' => sha1($password)]);
-    return $stmt->fetch(PDO::FETCH_ASSOC);
+    $stmt = $conexion->prepare('SELECT * FROM usuarios WHERE `user` = :u LIMIT 1');
+    $stmt->execute([':u' => sha1(trim($user))]);
+    $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$fila) return false;
+
+    $guardada = $fila['password'];
+
+    // Ya migrada a bcrypt/argon
+    if (strncmp($guardada, '$2y$', 4) === 0 || strncmp($guardada, '$argon2', 7) === 0) {
+        return password_verify($password, $guardada) ? $fila : false;
+    }
+
+    // Formato antiguo SHA1: valida y migra al vuelo
+    if (hash_equals($guardada, sha1($password))) {
+        $nuevo = password_hash($password, PASSWORD_DEFAULT);
+        $conexion->prepare('UPDATE usuarios SET `password` = :p WHERE `user` = :u')
+                 ->execute([':p' => $nuevo, ':u' => sha1(trim($user))]);
+        return $fila;
+    }
+    return false;
 }
 
 function obtenerDatosPaciente(PDO $conexion, int $idPersona)

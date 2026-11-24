@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../auth/autenticacion.php';
-$u = requerirSesionApi(['paciente', 'personal']); // o solo ['personal'] según el endpoint
+require_once __DIR__ . '/../validacionesCita.php';
 // php/ABCC/altas.php
 // Endpoint de ALTAS. Recibe JSON por POST y responde JSON.
 // El campo "tipo" indica qué alta se realiza.
@@ -44,7 +44,7 @@ function camposFaltantes(array $datos, array $requeridos): array
 {
     $faltan = [];
     foreach ($requeridos as $campo) {
-        if (!isset($datos[$campo]) || trim((string)$datos[$campo]) === '') {
+        if (!isset($datos[$campo]) || trim((string) $datos[$campo]) === '') {
             $faltan[] = $campo;
         }
     }
@@ -57,9 +57,9 @@ function exigir(conexionBaseDatos $db, array $datos, array $requeridos): void
     $faltan = camposFaltantes($datos, $requeridos);
     if ($faltan) {
         $db->responder(422, [
-            'ok'      => false,
-            'error'   => 'Faltan campos obligatorios.',
-            'faltan'  => $faltan
+            'ok' => false,
+            'error' => 'Faltan campos obligatorios.',
+            'faltan' => $faltan
         ]);
     }
 }
@@ -69,15 +69,22 @@ function exigir(conexionBaseDatos $db, array $datos, array $requeridos): void
 // ---------------------------------------------------------------------------
 $tipo = $datos['tipo'] ?? '';
 
-$soloPersonal = ['persona', 'paciente', 'paciente_existente', 'paciente_transaccion',
-                 'empleado', 'empleado_existente', 'empleado_transaccion'];
+$soloPersonal = [
+    'persona',
+    'paciente',
+    'paciente_existente',
+    'paciente_transaccion',
+    'empleado',
+    'empleado_existente',
+    'empleado_transaccion'
+];
 
 if ($u['tipo'] === 'paciente') {
     if (in_array($tipo, $soloPersonal, true)) {
         $db->responder(403, ['ok' => false, 'error' => 'No tienes permisos para esta acción.']);
     }
     if ($tipo === 'cita') {
-        $datos['paciente_id'] = $u['paciente_id']; // ignora lo que mande el cliente
+        $datos['estado'] = 'Pendiente'; // el paciente no puede crear citas "Confirmada"
     }
 }
 
@@ -100,9 +107,9 @@ try {
             (new PersonaDAO($pdo))->insertar($persona);
 
             $db->responder(201, [
-                'ok'        => true,
-                'mensaje'   => 'Persona registrada.',
-                'idPersona' => (int)$pdo->lastInsertId()
+                'ok' => true,
+                'mensaje' => 'Persona registrada.',
+                'idPersona' => (int) $pdo->lastInsertId()
             ]);
             break;
 
@@ -111,7 +118,7 @@ try {
             exigir($db, $datos, ['id_persona', 'num_seguro']);
 
             $paciente = new paciente(
-                (int)$datos['id_persona'],
+                (int) $datos['id_persona'],
                 $datos['num_seguro'],
                 $datos['grupo_sanguineo'] ?? null,
                 $datos['alergias'] ?? null
@@ -127,7 +134,7 @@ try {
             exigir($db, $datos, ['id_persona', 'num_seguro', 'user', 'password']);
 
             $paciente = new paciente(
-                (int)$datos['id_persona'],
+                (int) $datos['id_persona'],
                 $datos['num_seguro'],
                 $datos['grupo_sanguineo'] ?? null,
                 $datos['alergias'] ?? null
@@ -140,7 +147,7 @@ try {
             );
 
             $db->responder(201, [
-                'ok'      => true,
+                'ok' => true,
                 'mensaje' => 'Paciente y usuario creados con el procedimiento almacenado.'
             ]);
             break;
@@ -176,7 +183,7 @@ try {
             );
 
             $db->responder(201, [
-                'ok'      => true,
+                'ok' => true,
                 'mensaje' => 'Paciente y usuario creados mediante transacción.'
             ]);
             break;
@@ -186,7 +193,7 @@ try {
             exigir($db, $datos, ['id_persona', 'cargo', 'salario']);
 
             $empleado = new empleado(
-                (int)$datos['id_persona'],
+                (int) $datos['id_persona'],
                 $datos['cargo'],
                 $datos['especializacion'] ?? null,
                 $datos['salario']
@@ -202,7 +209,7 @@ try {
             exigir($db, $datos, ['id_persona', 'cargo', 'salario', 'user', 'password']);
 
             $empleado = new empleado(
-                (int)$datos['id_persona'],
+                (int) $datos['id_persona'],
                 $datos['cargo'],
                 $datos['especializacion'] ?? null,
                 $datos['salario']
@@ -215,7 +222,7 @@ try {
             );
 
             $db->responder(201, [
-                'ok'      => true,
+                'ok' => true,
                 'mensaje' => 'Empleado y usuario creados con el procedimiento almacenado.'
             ]);
             break;
@@ -252,7 +259,7 @@ try {
             );
 
             $db->responder(201, [
-                'ok'      => true,
+                'ok' => true,
                 'mensaje' => 'Empleado y usuario creados mediante transacción.'
             ]);
             break;
@@ -260,30 +267,31 @@ try {
         // ---- Cita ----------------------------------------------------------
         case 'cita':
             exigir($db, $datos, ['fecha_hora', 'motivo', 'paciente_id', 'doctor_id']);
-
+            $datos['fecha_hora'] = ValidadorCitas::validarFechaHora($datos['fecha_hora']);
+            $datos['motivo'] = ValidadorCitas::validarMotivo($datos['motivo']);
             $cita = new Cita(
                 $datos['fecha_hora'],            // formato: YYYY-MM-DD HH:MM:SS
                 $datos['motivo'],
                 $datos['estado'] ?? 'Pendiente',
-                (int)$datos['paciente_id'],
-                (int)$datos['doctor_id']
+                (int) $datos['paciente_id'],
+                (int) $datos['doctor_id']
             );
 
             (new CitaDAO($pdo))->insertar($cita);
 
             $db->responder(201, [
-                'ok'      => true,
+                'ok' => true,
                 'mensaje' => 'Cita registrada.',
-                'idCita'  => (int)$pdo->lastInsertId()
+                'idCita' => (int) $pdo->lastInsertId()
             ]);
             break;
 
         // ---- Tipo desconocido ----------------------------------------------
         default:
             $db->responder(400, [
-                'ok'       => false,
-                'error'    => 'Campo "tipo" inválido o ausente.',
-                'validos'  => [
+                'ok' => false,
+                'error' => 'Campo "tipo" inválido o ausente.',
+                'validos' => [
                     'persona',
                     'paciente',
                     'paciente_existente',
@@ -299,7 +307,7 @@ try {
 } catch (PDOException $e) {
     // Código de error de MySQL (1062 = duplicado, 1452 = llave foránea, etc.)
     $codigoMySQL = $e->errorInfo[1] ?? 0;
-    $sqlState    = $e->errorInfo[0] ?? '';
+    $sqlState = $e->errorInfo[0] ?? '';
 
     if ($sqlState === '45000') {
         // Error lanzado con SIGNAL dentro del procedimiento almacenado
