@@ -1,6 +1,56 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 require_once __DIR__ . '/../php/auth/autenticacion.php';
 require_once __DIR__ . '/../php/baseDatos/conexionBaseDatos.php';
+
+function generarCaptcha(): string
+{
+    // Se omiten caracteres ambiguos (0, O, 1, I, l)
+    $caracteres = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    $codigo = '';
+    for ($i = 0; $i < 5; $i++) {
+        $codigo .= $caracteres[random_int(0, strlen($caracteres) - 1)];
+    }
+
+    $_SESSION['captcha_codigo'] = $codigo;
+
+    $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="160" height="46" viewBox="0 0 160 46">';
+    $svg .= '<rect width="100%" height="100%" rx="6" fill="#f1f5f9"/>';
+
+    $coloresRuido = ['#94a3b8', '#cbd5e1', '#64748b'];
+    for ($i = 0; $i < 5; $i++) {
+        $x1 = random_int(0, 160);
+        $y1 = random_int(0, 46);
+        $x2 = random_int(0, 160);
+        $y2 = random_int(0, 46);
+        $color = $coloresRuido[array_rand($coloresRuido)];
+        $svg .= "<line x1=\"{$x1}\" y1=\"{$y1}\" x2=\"{$x2}\" y2=\"{$y2}\" stroke=\"{$color}\" stroke-width=\"1.2\"/>";
+    }
+
+    $coloresTexto = ['#0f172a', '#1e3a8a', '#0f766e', '#334155'];
+    for ($i = 0; $i < strlen($codigo); $i++) {
+        $x = 18 + ($i * 27);
+        $y = random_int(29, 35);
+        $angulo = random_int(-18, 18);
+        $color = $coloresTexto[array_rand($coloresTexto)];
+        $letra = htmlspecialchars($codigo[$i], ENT_QUOTES, 'UTF-8');
+        $svg .= "<text x=\"{$x}\" y=\"{$y}\" fill=\"{$color}\" font-family=\"monospace\" font-size=\"24\" font-weight=\"bold\" transform=\"rotate({$angulo} {$x} {$y})\">{$letra}</text>";
+    }
+
+    $svg .= '</svg>';
+
+    return 'data:image/svg+xml;base64,' . base64_encode($svg);
+}
+
+// Endpoint ligero para refrescar solo la imagen CAPTCHA sin recargar el formulario
+if (isset($_GET['refresh_captcha'])) {
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['img' => generarCaptcha()]);
+    exit;
+}
 
 $error = '';
 $cone = null;
@@ -52,60 +102,71 @@ if ($cone && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $user = trim($_POST['user'] ?? '');
     $password = $_POST['password'] ?? '';
     $tipoAcceso = $_POST['tipo_acceso'] ?? 'paciente';
+    $captchaInput = trim($_POST['captcha'] ?? '');
+    $captchaGuardado = $_SESSION['captcha_codigo'] ?? '';
 
-    try {
-        $usuario = verificarUsuario($cone, $user, $password);
+    // Se invalida de inmediato para evitar reutilización del mismo código
+    unset($_SESSION['captcha_codigo']);
 
-        if (!$usuario) {
-            $error = 'Correo electrónico o contraseña incorrectos.';
-        } else {
-            $idPersona = (int)($usuario['idDocPac'] ?? 0);
+    if ($captchaInput === '' || $captchaGuardado === '' || strcasecmp($captchaInput, $captchaGuardado) !== 0) {
+        $error = 'El código de verificación (CAPTCHA) es incorrecto.';
+    } else {
+        try {
+            $usuario = verificarUsuario($cone, $user, $password);
 
-            if ($tipoAcceso === 'paciente') {
-                $datos = $idPersona ? obtenerDatosPaciente($cone, $idPersona) : false;
-
-                if (!$datos) {
-                    $error = 'Esta cuenta no está registrada como paciente. Si eres trabajador, selecciona la pestaña "Personal".';
-                } else {
-                    $nombreCompleto = trim($datos['nombres'] . ' ' . $datos['primer_apellido'] . ' ' . ($datos['segundo_apellido'] ?? ''));
-
-                    emitirToken([
-                        'tipo' => 'paciente',
-                        'id_persona' => (int) $datos['id'],
-                        'paciente_id' => (int) $datos['id'],
-                        'nombre_completo' => $nombreCompleto,
-                        'num_seguro' => $datos['num_seguro'],
-                    ]);
-
-                    header('Location: homePaciente.php');
-                    exit;
-                }
+            if (!$usuario) {
+                $error = 'Correo electrónico o contraseña incorrectos.';
             } else {
-                $datos = $idPersona ? obtenerDatosEmpleado($cone, $idPersona) : false;
+                $idPersona = (int)($usuario['idDocPac'] ?? 0);
 
-                if (!$datos) {
-                    $error = 'Esta cuenta no está registrada como personal de la clínica.';
+                if ($tipoAcceso === 'paciente') {
+                    $datos = $idPersona ? obtenerDatosPaciente($cone, $idPersona) : false;
+
+                    if (!$datos) {
+                        $error = 'Esta cuenta no está registrada como paciente. Si eres trabajador, selecciona la pestaña "Personal".';
+                    } else {
+                        $nombreCompleto = trim($datos['nombres'] . ' ' . $datos['primer_apellido'] . ' ' . ($datos['segundo_apellido'] ?? ''));
+
+                        emitirToken([
+                            'tipo' => 'paciente',
+                            'id_persona' => (int) $datos['id'],
+                            'paciente_id' => (int) $datos['id'],
+                            'nombre_completo' => $nombreCompleto,
+                            'num_seguro' => $datos['num_seguro'],
+                        ]);
+
+                        header('Location: homePaciente.php');
+                        exit;
+                    }
                 } else {
-                    $nombreCompleto = trim($datos['nombres'] . ' ' . $datos['primer_apellido'] . ' ' . ($datos['segundo_apellido'] ?? ''));
+                    $datos = $idPersona ? obtenerDatosEmpleado($cone, $idPersona) : false;
 
-                    emitirToken([
-                        'tipo' => 'personal',
-                        'id_persona' => (int) $datos['id'],
-                        'nombre_completo' => $nombreCompleto,
-                        'cargo' => $datos['cargo'],
-                        'especializacion' => $datos['especializacion'] ?? '',
-                    ]);
+                    if (!$datos) {
+                        $error = 'Esta cuenta no está registrada como personal de la clínica.';
+                    } else {
+                        $nombreCompleto = trim($datos['nombres'] . ' ' . $datos['primer_apellido'] . ' ' . ($datos['segundo_apellido'] ?? ''));
 
-                    header('Location: homePersonal.php');
-                    exit;
+                        emitirToken([
+                            'tipo' => 'personal',
+                            'id_persona' => (int) $datos['id'],
+                            'nombre_completo' => $nombreCompleto,
+                            'cargo' => $datos['cargo'],
+                            'especializacion' => $datos['especializacion'] ?? '',
+                        ]);
+
+                        header('Location: homePersonal.php');
+                        exit;
+                    }
                 }
             }
+        } catch (Throwable $e) {
+            error_log('[login] ' . $e->getMessage());
+            $error = 'Ocurrió un error. Intenta de nuevo.';
         }
-    } catch (Throwable $e) {
-        error_log('[login] ' . $e->getMessage());
-        $error = 'Ocurrió un error. Intenta de nuevo.';
     }
 }
+
+$captchaImg = generarCaptcha();
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -155,10 +216,17 @@ if ($cone && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <label for="u">Correo electrónico</label>
-                <input id="u" name="user" autocomplete="username" required placeholder="correo@ejemplo.com">
+                <input id="u" name="user" autocomplete="username" required placeholder="correo@ejemplo.com" value="<?= htmlspecialchars($_POST['user'] ?? '') ?>">
 
                 <label for="p">Contraseña</label>
                 <input id="p" name="password" type="password" autocomplete="current-password" required>
+
+                <label for="captcha">Código de verificación</label>
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <img id="captcha-img" src="<?= $captchaImg ?>" alt="Código CAPTCHA" style="border: 1px solid #cbd5e1; border-radius: 6px; height: 46px;">
+                    <button type="button" id="btn-refresh-captcha" title="Generar otro código" aria-label="Generar otro código" style="padding: 0.5rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; cursor: pointer; font-size: 1.1rem;">↻</button>
+                </div>
+                <input id="captcha" name="captcha" type="text" autocomplete="off" required maxlength="5" placeholder="Escribe los 5 caracteres" style="text-transform: uppercase;">
 
                 <div class="opt">
                     <a href="#">¿Olvidaste tu contraseña?</a>
@@ -180,6 +248,20 @@ if ($cone && $_SERVER['REQUEST_METHOD'] === 'POST') {
             const esPersonal = b.dataset.t === 'personal';
             document.getElementById('rol').style.display = esPersonal ? 'block' : 'none';
             document.getElementById('tipo_acceso').value = b.dataset.t;
+        });
+
+        document.getElementById('btn-refresh-captcha').addEventListener('click', async () => {
+            try {
+                const res = await fetch('?refresh_captcha=1');
+                const data = await res.json();
+                if (data.img) {
+                    document.getElementById('captcha-img').src = data.img;
+                    document.getElementById('captcha').value = '';
+                    document.getElementById('captcha').focus();
+                }
+            } catch (e) {
+                console.error('Error al actualizar CAPTCHA', e);
+            }
         });
     </script>
 </body>
