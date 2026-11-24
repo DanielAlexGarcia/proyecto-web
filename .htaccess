@@ -1,0 +1,9 @@
+RewriteEngine On
+
+# Si el archivo o carpeta existe en la raíz (index.html, css/, JS/, php/), cárgalo directo
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Redirige internamente rutas limpias (ej. /login) hacia pages/login.php
+RewriteRule ^([^/]+)/?$ pages/$1.php [NC,L]

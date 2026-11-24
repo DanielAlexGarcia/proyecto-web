@@ -117,7 +117,7 @@ if ($cone && $_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$usuario) {
                 $error = 'Correo electrónico o contraseña incorrectos.';
             } else {
-                $idPersona = (int)($usuario['idDocPac'] ?? 0);
+                $idPersona = (int) ($usuario['idDocPac'] ?? 0);
 
                 if ($tipoAcceso === 'paciente') {
                     $datos = $idPersona ? obtenerDatosPaciente($cone, $idPersona) : false;
@@ -135,7 +135,7 @@ if ($cone && $_SERVER['REQUEST_METHOD'] === 'POST') {
                             'num_seguro' => $datos['num_seguro'],
                         ]);
 
-                        header('Location: homePaciente.php');
+                        header("Location: dashboard");
                         exit;
                     }
                 } else {
@@ -154,7 +154,7 @@ if ($cone && $_SERVER['REQUEST_METHOD'] === 'POST') {
                             'especializacion' => $datos['especializacion'] ?? '',
                         ]);
 
-                        header('Location: homePersonal.php');
+                        header("Location: dashboard");
                         exit;
                     }
                 }
@@ -175,13 +175,13 @@ $captchaImg = generarCaptcha();
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Iniciar sesión | Clínica Bienestar</title>
-    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 
 <body>
     <main class="auth">
         <div class="card">
-            <a class="logo" href="../index.html">Clínica <span>Bienestar</span></a>
+            <a class="logo" href="index.html">Clínica <span>Bienestar</span></a>
             <h1>Iniciar sesión</h1>
             <p class="s">Accede a tu cuenta para continuar.</p>
 
@@ -216,17 +216,22 @@ $captchaImg = generarCaptcha();
                 </div>
 
                 <label for="u">Correo electrónico</label>
-                <input id="u" name="user" autocomplete="username" required placeholder="correo@ejemplo.com" value="<?= htmlspecialchars($_POST['user'] ?? '') ?>">
+                <input id="u" name="user" autocomplete="username" required placeholder="correo@ejemplo.com"
+                    value="<?= htmlspecialchars($_POST['user'] ?? '') ?>">
 
                 <label for="p">Contraseña</label>
                 <input id="p" name="password" type="password" autocomplete="current-password" required>
 
                 <label for="captcha">Código de verificación</label>
                 <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-                    <img id="captcha-img" src="<?= $captchaImg ?>" alt="Código CAPTCHA" style="border: 1px solid #cbd5e1; border-radius: 6px; height: 46px;">
-                    <button type="button" id="btn-refresh-captcha" title="Generar otro código" aria-label="Generar otro código" style="padding: 0.5rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; cursor: pointer; font-size: 1.1rem;">↻</button>
+                    <img id="captcha-img" src="<?= $captchaImg ?>" alt="Código CAPTCHA"
+                        style="border: 1px solid #cbd5e1; border-radius: 6px; height: 46px;">
+                    <button type="button" id="btn-refresh-captcha" title="Generar otro código"
+                        aria-label="Generar otro código"
+                        style="padding: 0.5rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; cursor: pointer; font-size: 1.1rem;">↻</button>
                 </div>
-                <input id="captcha" name="captcha" type="text" autocomplete="off" required maxlength="5" placeholder="Escribe los 5 caracteres" style="text-transform: uppercase;">
+                <input id="captcha" name="captcha" type="text" autocomplete="off" required maxlength="5"
+                    placeholder="Escribe los 5 caracteres" style="text-transform: uppercase;">
 
                 <div class="opt">
                     <a href="#">¿Olvidaste tu contraseña?</a>
@@ -236,8 +241,8 @@ $captchaImg = generarCaptcha();
             </form>
 
             <p class="foot">
-                ¿Eres paciente nuevo? <a href="registro.php">Crea tu cuenta</a><br>
-                <a href="../index.html">← Volver al inicio</a>
+                ¿Eres paciente nuevo? <a href="registro">Crea tu cuenta</a><br>
+                <a href="index.html">← Volver al inicio</a>
             </p>
         </div>
     </main>

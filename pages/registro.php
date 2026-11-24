@@ -118,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Registro de paciente | Clínica Bienestar</title>
-  <link rel="stylesheet" href="../css/styles.css">
+  <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
   <main class="auth">
@@ -188,8 +188,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </form>
 
       <p class="foot">
-        ¿Ya tienes cuenta? <a href="login.php">Inicia sesión</a><br>
-        <a href="../index.html">← Volver al inicio</a>
+        ¿Ya tienes cuenta? <a href="login">Inicia sesión</a><br>
+        <a href="index.html">← Volver al inicio</a>
       </p>
     </div>
   </main>
@@ -258,7 +258,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (res.ok) {
           alert(data.mensaje || 'Registro exitoso.');
-          window.location.href = 'login.php';
+          window.location.href = 'login';
         } else {
           alert(data.error || 'Ocurrió un error al registrar.');
         }

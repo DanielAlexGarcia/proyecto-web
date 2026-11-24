@@ -1,15 +1,15 @@
 <?php
 require_once __DIR__ . '/../php/auth/autenticacion.php';
-$u = requerirSesionPagina('paciente');
+$u = requerirSesionPagina('paciente', 'login');
 
 require_once __DIR__ . '/../php/baseDatos/conexionBaseDatos.php';
 require_once __DIR__ . '/../php/validacionesCita.php';
 
-$pacienteId     = (int)$u['paciente_id'];
+$pacienteId = (int) $u['paciente_id'];
 $nombrePaciente = $u['nombre_completo'] ?? 'Paciente';
-$numSeguro      = $u['num_seguro'] ?? 'Activo';
+$numSeguro = $u['num_seguro'] ?? 'Activo';
 
-$partes    = array_values(array_filter(explode(' ', $nombrePaciente)));
+$partes = array_values(array_filter(explode(' ', $nombrePaciente)));
 $iniciales = strtoupper(mb_substr($partes[0] ?? 'P', 0, 1) . mb_substr($partes[1] ?? '', 0, 1));
 
 // 4. Carga de doctores y citas (PDO directo; no depende de CitaDAO)
@@ -159,7 +159,7 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
                                 <?= htmlspecialchars($numSeguro) ?></span>
                         </div>
                     </div>
-                    <a href="../close.php"
+                    <a href="close.php"
                         class="hidden sm:inline-flex px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-200 hover:bg-slate-50">Cerrar
                         sesión</a>
                     <button type="button" onclick="toggleMobileMenu()" aria-label="Abrir menú"
@@ -181,7 +181,7 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
             <button type="button" onclick="toggleMobileMenu(); openCancelModal();"
                 class="w-full px-4 py-3 rounded-xl text-sm font-medium text-rose-600 hover:bg-rose-50 text-left">Cancelar
                 cita</button>
-            <a href="../close.php"
+            <a href="close.php"
                 class="block px-4 py-3 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50">Cerrar
                 sesión</a>
         </div>
@@ -192,7 +192,8 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
 
         <?php if ($errorCarga): ?>
             <div class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-sm">
-                <?= htmlspecialchars($errorCarga) ?></div>
+                <?= htmlspecialchars($errorCarga) ?>
+            </div>
         <?php endif; ?>
 
         <section class="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
@@ -410,7 +411,7 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
     <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 max-w-sm w-full pointer-events-none"></div>
 
     <!-- ================= JAVASCRIPT ================= -->
-     <script src="../JS/validacionPaciente.js"></script>
+    <script src="JS/validacionPaciente.js"></script>
     <script>
         const PACIENTE_ID = <?= (int) $pacienteId ?>;
         const NOMBRE_PACIENTE = <?= json_encode($nombrePaciente, JSON_UNESCAPED_UNICODE) ?>;
@@ -419,10 +420,10 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
 
         // Rutas relativas a /pages/
         const API_URLS = {
-            altas: '../php/ABCC/altas.php',
-            cambios: '../php/ABCC/cambios.php',
-            cambiosParciales: '../php/ABCC/cambiosParciales.php',
-            bajas: '../php/ABCC/bajas.php'
+            altas: 'php/ABCC/altas.php',
+            cambios: 'php/ABCC/cambios.php',
+            cambiosParciales: 'php/ABCC/cambiosParciales.php',
+            bajas: 'php/ABCC/bajas.php'
         };
 
         const HORARIOS = [
@@ -476,7 +477,7 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
 
             // Token expirado o ausente: volver al login
             if (res.status === 401) {
-                window.location.href = 'login.php';
+                window.location.href = 'login';
                 return { ok: false, data: { error: 'Sesión expirada.' } };
             }
 
