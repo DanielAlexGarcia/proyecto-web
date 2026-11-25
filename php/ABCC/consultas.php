@@ -156,9 +156,7 @@ $estructuraDatos = [
 ];
 
 if ($metodo === 'GET') {
-    if (!$esAdmin) {
-        unset($configEntidad['filtros']['salario']);
-    }
+    
     $datos = $cons->leerJSON();
 
     if (!$datos) {
@@ -190,6 +188,9 @@ if ($metodo === 'GET') {
 
     $configEntidad = $estructuraDatos[$tipoEntidad];
     $esFuncion = in_array($tipoEntidad, [6, 7], true);
+    if (!$esAdmin) {
+        unset($configEntidad['filtros']['salario']);
+    }
 
     // Validar que no se envíen claves desconocidas en el JSON
     $clavesBase = $esFuncion ? ['entidad'] : ['entidad', 'filtro', 'valor'];

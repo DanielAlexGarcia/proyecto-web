@@ -26,12 +26,7 @@ $estructuraDatos = [
     3 => ['id', 'fechaHora', 'motivo', 'estado', 'pacienteID', 'doctorID']                        // Cita
 ];
 
-$tiposDeEmpleado = ['empleado', 'empleado_existente', 'empleado_transaccion'];
-if ($u['tipo'] === 'personal'
-    && in_array($tipo, $tiposDeEmpleado, true)
-    && mb_strtolower($u['cargo'] ?? '') !== 'administrador') {
-    $db->responder(403, ['ok' => false, 'error' => 'Solo administración puede dar de alta empleados.']);
-}
+
 
 if ($metodo === 'PUT') {
     $datos = $cons->leerJSON();
@@ -59,6 +54,14 @@ if ($metodo === 'PUT') {
             'error' => 'La estructura del JSON no coincide con ningún modelo registrado',
             'claves_recibidas' => $clavesRecibidas
         ]);
+    }
+    // ---- Restricciones para personal ----
+    if (
+        $u['tipo'] === 'personal'
+        && $tipoEntidad === 1
+        && mb_strtolower(trim($u['cargo'] ?? ''), 'UTF-8') !== 'administrador'
+    ) {
+        $cons->responder(403, ['error' => 'Solo administración puede modificar empleados.']);
     }
     // ---- Restricciones para pacientes ----
     if ($u['tipo'] === 'paciente') {
