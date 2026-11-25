@@ -1029,10 +1029,10 @@ $jsonAttr = JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG | JSON_U
 
     <script>
         function panelPersonal() {
-            init() {
-                this.$nextTick(() => document.querySelectorAll('form').forEach(f => Validacion.activar(f)));
-            },
             return {
+                init() {
+                    this.$nextTick(() => document.querySelectorAll('form').forEach(f => Validacion.activar(f)));
+                },
                 activeTab: 'tab-pacientes',
                 empleadoActualId: <?= (int) $empleadoActual['id_persona'] ?>,
 

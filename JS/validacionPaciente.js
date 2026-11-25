@@ -104,3 +104,7 @@ function validarCancelarCita({ citaId }, { appointments = [] } = {}) {
 
     return { valido: true, mensaje: '' };
 }
+function localISODate(offsetDays = 0) {
+    const t = new Date(); t.setDate(t.getDate() + offsetDays);
+    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+}

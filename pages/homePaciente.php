@@ -731,6 +731,14 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
                 },
 
                 async handleModifySubmit() {
+                    const v = validarModificarCita({
+                        citaId: this.modForm.id,
+                        doctorId: this.modForm.doctor_id,
+                        fecha: this.modForm.date,
+                        hora: this.modForm.time,
+                        motivo: this.modForm.reason
+                    }, { appointments: this.appointments, doctorsList: this.doctorsList, HORARIOS: this.HORARIOS });
+                    if (!v.valido) return;
                     const id = Number(this.modForm.id);
                     const orig = this.appointments.find(c => c.id === id);
                     if (!orig) return;
@@ -769,6 +777,8 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
                 },
 
                 async handleCancelSubmit() {
+                    const v = validarCancelarCita({ citaId: this.cancelForm.id }, { appointments: this.appointments });
+                    if (!v.valido) return;
                     const id = Number(this.cancelForm.id);
                     try {
                         const orig = this.appointments.find(c => c.id === id);
