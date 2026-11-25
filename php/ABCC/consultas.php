@@ -16,6 +16,21 @@ foreach (glob('../modelosDAO/*.php') as $dao) {
 $cons = new conexionBaseDatos();
 $conexion = $cons->getConexion();
 $metodo = $_SERVER['REQUEST_METHOD'];
+$esAdmin = mb_strtolower(trim($u['cargo'] ?? ''), 'UTF-8') === 'administrador';
+
+function sinSalario(array $datos): array
+{
+    if (array_key_exists('salario', $datos)) {
+        unset($datos['salario']);
+        return $datos;
+    }
+    foreach ($datos as $k => $v) {
+        if (is_array($v)) {
+            $datos[$k] = sinSalario($v);
+        }
+    }
+    return $datos;
+}
 
 // Estructuras JSON válidas para consultas:
 // 1) Todos:     {"entidad": "..."}
@@ -26,121 +41,124 @@ $metodo = $_SERVER['REQUEST_METHOD'];
 $estructuraDatos = [
     0 => [
         'nombres_entidad' => ['persona', 'personas'],
-        'claves_id'       => ['id'],
-        'filtros'         => [
-            'id'               => 'p.id',
-            'nombres'          => 'p.nombres',
-            'primerAP'         => 'p.primer_apellido',
-            'primer_apellido'  => 'p.primer_apellido',
-            'segundoAP'        => 'p.segundo_apellido',
+        'claves_id' => ['id'],
+        'filtros' => [
+            'id' => 'p.id',
+            'nombres' => 'p.nombres',
+            'primerAP' => 'p.primer_apellido',
+            'primer_apellido' => 'p.primer_apellido',
+            'segundoAP' => 'p.segundo_apellido',
             'segundo_apellido' => 'p.segundo_apellido',
-            'fechaNaci'        => 'p.fecha_nacimiento',
-            'genero'           => 'p.genero',
-            'Direccion'        => 'p.direccion',
-            'direccion'        => 'p.direccion'
+            'fechaNaci' => 'p.fecha_nacimiento',
+            'genero' => 'p.genero',
+            'Direccion' => 'p.direccion',
+            'direccion' => 'p.direccion'
         ]
     ],
     1 => [
         'nombres_entidad' => ['empleado', 'empleados'],
-        'claves_id'       => ['id', 'personaID', 'id_persona'],
-        'filtros'         => [
-            'personaID'       => 'e.id_persona',
-            'nombres'         => 'p.nombres',
-            'primerAP'        => 'p.primer_apellido',
-            'cargo'           => 'e.cargo',
+        'claves_id' => ['id', 'personaID', 'id_persona'],
+        'filtros' => [
+            'personaID' => 'e.id_persona',
+            'nombres' => 'p.nombres',
+            'primerAP' => 'p.primer_apellido',
+            'cargo' => 'e.cargo',
             'especializacion' => 'e.especializacion',
-            'salario'         => 'e.salario'
+            'salario' => 'e.salario'
         ]
     ],
     2 => [
         'nombres_entidad' => ['paciente', 'pacientes'],
-        'claves_id'       => ['id', 'personaID', 'id_persona'],
-        'filtros'         => [
-            'personaID'    => 'pa.id_persona',
-            'nombres'      => 'p.nombres',
-            'primerAP'     => 'p.primer_apellido',
-            'numSeguro'    => 'pa.num_seguro',
+        'claves_id' => ['id', 'personaID', 'id_persona'],
+        'filtros' => [
+            'personaID' => 'pa.id_persona',
+            'nombres' => 'p.nombres',
+            'primerAP' => 'p.primer_apellido',
+            'numSeguro' => 'pa.num_seguro',
             'grupSanginio' => 'pa.grupo_sanguineo',
             'grupSangineo' => 'pa.grupo_sanguineo',
-            'alergias'     => 'pa.alergias'
+            'alergias' => 'pa.alergias'
         ]
     ],
     3 => [
         'nombres_entidad' => ['cita', 'citas'],
-        'claves_id'       => ['id'],
-        'filtros'         => [
-            'id'         => 'c.id',
-            'fechaHora'  => 'c.fecha_hora',
-            'motivo'     => 'c.motivo',
-            'estado'     => 'c.estado',
+        'claves_id' => ['id'],
+        'filtros' => [
+            'id' => 'c.id',
+            'fechaHora' => 'c.fecha_hora',
+            'motivo' => 'c.motivo',
+            'estado' => 'c.estado',
             'pacienteID' => 'c.paciente_id',
-            'doctorID'   => 'c.doctor_id'
+            'doctorID' => 'c.doctor_id'
         ]
     ],
     4 => [
         'nombres_entidad' => ['vista_pacientes', 'vista_paciente', 'vistapacientes', 'vistapaciente'],
-        'claves_id'       => ['id', 'id_paciente', 'personaID', 'id_persona'],
-        'filtros'         => [
-            'id'               => 'id_paciente',
-            'id_paciente'      => 'id_paciente',
-            'personaID'        => 'id_paciente',
-            'nombre_completo'  => 'nombre_completo',
-            'nombreCompleto'   => 'nombre_completo',
-            'nombre'           => 'nombre_completo',
+        'claves_id' => ['id', 'id_paciente', 'personaID', 'id_persona'],
+        'filtros' => [
+            'id' => 'id_paciente',
+            'id_paciente' => 'id_paciente',
+            'personaID' => 'id_paciente',
+            'nombre_completo' => 'nombre_completo',
+            'nombreCompleto' => 'nombre_completo',
+            'nombre' => 'nombre_completo',
             'fecha_nacimiento' => 'fecha_nacimiento',
-            'fechaNaci'        => 'fecha_nacimiento',
-            'genero'           => 'genero',
-            'direccion'        => 'direccion',
-            'Direccion'        => 'direccion',
-            'num_seguro'       => 'num_seguro',
-            'numSeguro'        => 'num_seguro',
-            'grupo_sanguineo'  => 'grupo_sanguineo',
-            'grupSangineo'     => 'grupo_sanguineo',
-            'grupSanginio'     => 'grupo_sanguineo',
-            'alergias'         => 'alergias'
+            'fechaNaci' => 'fecha_nacimiento',
+            'genero' => 'genero',
+            'direccion' => 'direccion',
+            'Direccion' => 'direccion',
+            'num_seguro' => 'num_seguro',
+            'numSeguro' => 'num_seguro',
+            'grupo_sanguineo' => 'grupo_sanguineo',
+            'grupSangineo' => 'grupo_sanguineo',
+            'grupSanginio' => 'grupo_sanguineo',
+            'alergias' => 'alergias'
         ]
     ],
     5 => [
         'nombres_entidad' => ['vista_citas', 'vista_cita', 'vistacitas', 'vistacita'],
-        'claves_id'       => ['id', 'id_cita'],
-        'filtros'         => [
-            'id'                       => 'id_cita',
-            'id_cita'                  => 'id_cita',
-            'fecha_hora'               => 'fecha_hora',
-            'fechaHora'                => 'fecha_hora',
-            'motivo'                   => 'motivo',
-            'estado'                   => 'estado',
-            'paciente_id'              => 'paciente_id',
-            'pacienteID'               => 'paciente_id',
+        'claves_id' => ['id', 'id_cita'],
+        'filtros' => [
+            'id' => 'id_cita',
+            'id_cita' => 'id_cita',
+            'fecha_hora' => 'fecha_hora',
+            'fechaHora' => 'fecha_hora',
+            'motivo' => 'motivo',
+            'estado' => 'estado',
+            'paciente_id' => 'paciente_id',
+            'pacienteID' => 'paciente_id',
             'paciente_nombre_completo' => 'paciente_nombre_completo',
-            'pacienteNombre'           => 'paciente_nombre_completo',
-            'doctor_id'                => 'doctor_id',
-            'doctorID'                 => 'doctor_id',
-            'doctor_nombre_completo'   => 'doctor_nombre_completo',
-            'doctorNombre'             => 'doctor_nombre_completo',
-            'doctor_cargo'             => 'doctor_cargo',
-            'doctorCargo'              => 'doctor_cargo',
-            'cargo'                    => 'doctor_cargo',
-            'doctor_especialidad'      => 'doctor_especialidad',
-            'doctorEspecialidad'       => 'doctor_especialidad',
-            'especialidad'             => 'doctor_especialidad'
+            'pacienteNombre' => 'paciente_nombre_completo',
+            'doctor_id' => 'doctor_id',
+            'doctorID' => 'doctor_id',
+            'doctor_nombre_completo' => 'doctor_nombre_completo',
+            'doctorNombre' => 'doctor_nombre_completo',
+            'doctor_cargo' => 'doctor_cargo',
+            'doctorCargo' => 'doctor_cargo',
+            'cargo' => 'doctor_cargo',
+            'doctor_especialidad' => 'doctor_especialidad',
+            'doctorEspecialidad' => 'doctor_especialidad',
+            'especialidad' => 'doctor_especialidad'
         ]
     ],
     6 => [
         'nombres_entidad' => ['citas_proximas', 'cita_proxima', 'citasproximas', 'fn_citas_proximas'],
-        'claves_id'       => ['id', 'paciente_id', 'pacienteID', 'id_paciente'],
-        'claves_funcion'  => ['fecha_hora', 'fechaHora', 'fecha_hora_consulta'],
-        'filtros'         => []
+        'claves_id' => ['id', 'paciente_id', 'pacienteID', 'id_paciente'],
+        'claves_funcion' => ['fecha_hora', 'fechaHora', 'fecha_hora_consulta'],
+        'filtros' => []
     ],
     7 => [
         'nombres_entidad' => ['consultar_empleados', 'consulta_empleados', 'fn_consultar_empleados'],
-        'claves_id'       => [],
-        'claves_funcion'  => ['rol', 'cargo', 'p_rol', 'especialidad', 'especializacion', 'p_especialidad'],
-        'filtros'         => []
+        'claves_id' => [],
+        'claves_funcion' => ['rol', 'cargo', 'p_rol', 'especialidad', 'especializacion', 'p_especialidad'],
+        'filtros' => []
     ]
 ];
 
 if ($metodo === 'GET') {
+    if (!$esAdmin) {
+        unset($configEntidad['filtros']['salario']);
+    }
     $datos = $cons->leerJSON();
 
     if (!$datos) {
@@ -226,17 +244,17 @@ if ($metodo === 'GET') {
             $stmt = $conexion->prepare("SELECT fn_citas_proximas(:paciente_id, :fecha_hora) AS resultado");
             $stmt->execute([
                 ':paciente_id' => $pacienteId,
-                ':fecha_hora'  => trim((string) $fechaHora)
+                ':fecha_hora' => trim((string) $fechaHora)
             ]);
 
             $texto = (string) $stmt->fetchColumn();
             $sinResultados = ($texto === 'No se encontraron citas próximas para el paciente indicado.');
 
             $cons->responder(200, [
-                'paciente_id'         => $pacienteId,
+                'paciente_id' => $pacienteId,
                 'fecha_hora_consulta' => trim((string) $fechaHora),
-                'resultado'           => $texto,
-                'citas'               => $sinResultados ? [] : explode("\n", $texto)
+                'resultado' => $texto,
+                'citas' => $sinResultados ? [] : explode("\n", $texto)
             ]);
         }
 
@@ -249,7 +267,7 @@ if ($metodo === 'GET') {
 
             $stmt = $conexion->prepare("SELECT fn_consultar_empleados(:rol, :especialidad) AS resultado");
             $stmt->execute([
-                ':rol'          => $rol,
+                ':rol' => $rol,
                 ':especialidad' => $especialidad
             ]);
 
@@ -257,10 +275,10 @@ if ($metodo === 'GET') {
             $sinResultados = ($texto === 'No se encontraron empleados con los filtros proporcionados.');
 
             $cons->responder(200, [
-                'rol'          => $rol,
+                'rol' => $rol,
                 'especialidad' => $especialidad,
-                'resultado'    => $texto,
-                'empleados'    => $sinResultados ? [] : explode("\n", $texto)
+                'resultado' => $texto,
+                'empleados' => $sinResultados ? [] : explode("\n", $texto)
             ]);
         }
 
@@ -279,12 +297,12 @@ if ($metodo === 'GET') {
                     $obj = $dao->obtenerPorId($id);
                     if ($obj) {
                         $resultado = [
-                            'id'        => $id,
-                            'nombres'   => $obj->getNombres(),
-                            'primerAP'  => $obj->getPrimerApellido(),
+                            'id' => $id,
+                            'nombres' => $obj->getNombres(),
+                            'primerAP' => $obj->getPrimerApellido(),
                             'segundoAP' => $obj->getSegundoApellido(),
                             'fechaNaci' => $obj->getFechaNacimiento(),
-                            'genero'    => $obj->getGenero(),
+                            'genero' => $obj->getGenero(),
                             'Direccion' => $obj->getCURP()
                         ];
                     }
@@ -295,10 +313,10 @@ if ($metodo === 'GET') {
                     $obj = $dao->obtenerPorId($id);
                     if ($obj) {
                         $resultado = [
-                            'personaID'       => $obj->getIDPersona(),
-                            'cargo'           => $obj->getCargo(),
+                            'personaID' => $obj->getIDPersona(),
+                            'cargo' => $obj->getCargo(),
                             'especializacion' => $obj->getEspecializacion(),
-                            'salario'         => $obj->getSalario()
+                            'salario' => $obj->getSalario()
                         ];
                     }
                     break;
@@ -308,10 +326,10 @@ if ($metodo === 'GET') {
                     $obj = $dao->obtenerPorId($id);
                     if ($obj) {
                         $resultado = [
-                            'personaID'    => $obj->getIDPersona(),
-                            'numSeguro'    => $obj->getNumSeg(),
+                            'personaID' => $obj->getIDPersona(),
+                            'numSeguro' => $obj->getNumSeg(),
                             'grupSangineo' => $obj->getGrupSangineo(),
-                            'alergias'     => $obj->getAlergias()
+                            'alergias' => $obj->getAlergias()
                         ];
                     }
                     break;
@@ -321,12 +339,12 @@ if ($metodo === 'GET') {
                     $obj = $dao->obtenerPorId($id);
                     if ($obj) {
                         $resultado = [
-                            'id'         => $id,
-                            'fechaHora'  => $obj->getFechaHora(),
-                            'motivo'     => $obj->getMotivo(),
-                            'estado'     => $obj->getEstado(),
+                            'id' => $id,
+                            'fechaHora' => $obj->getFechaHora(),
+                            'motivo' => $obj->getMotivo(),
+                            'estado' => $obj->getEstado(),
                             'pacienteID' => $obj->getPacienteID(),
-                            'doctorID'   => $obj->getDoctorID()
+                            'doctorID' => $obj->getDoctorID()
                         ];
                     }
                     break;
@@ -354,7 +372,7 @@ if ($metodo === 'GET') {
                 $cons->responder(404, ['error' => "No se encontró registro en '$entidadSolicitada' con ID $id"]);
             }
 
-            $cons->responder(200, $resultado);
+            $cons->responder(200, $esAdmin ? $resultado : sinSalario($resultado));
         }
 
         // MODO 2: CONSULTA CON FILTRO EN JSON
@@ -396,8 +414,15 @@ if ($metodo === 'GET') {
             ];
 
             $camposNumericos = [
-                'id', 'personaID', 'id_paciente', 'id_cita',
-                'pacienteID', 'paciente_id', 'doctorID', 'doctor_id', 'salario'
+                'id',
+                'personaID',
+                'id_paciente',
+                'id_cita',
+                'pacienteID',
+                'paciente_id',
+                'doctorID',
+                'doctor_id',
+                'salario'
             ];
 
             $esNumerico = is_numeric($valor) && in_array($filtro, $camposNumericos, true);
@@ -408,7 +433,8 @@ if ($metodo === 'GET') {
             $stmt = $conexion->prepare($sql);
             $stmt->execute([':valor' => $parametroValor]);
 
-            $cons->responder(200, $stmt->fetchAll(PDO::FETCH_ASSOC));
+            $filas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $cons->responder(200, $esAdmin ? $filas : sinSalario($filas));
         }
 
         // MODO 3: CONSULTA GENERAL (Todos los registros)
@@ -440,7 +466,7 @@ if ($metodo === 'GET') {
                 break;
         }
 
-        $cons->responder(200, $lista);
+        $cons->responder(200, $esAdmin ? $lista : sinSalario($lista));
 
     } catch (PDOException $e) {
         $cons->responder(500, [
