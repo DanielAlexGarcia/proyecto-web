@@ -68,7 +68,8 @@ function verificarUsuario(PDO $conexion, string $user, string $password)
     $stmt = $conexion->prepare('SELECT * FROM usuarios WHERE `user` = :u LIMIT 1');
     $stmt->execute([':u' => sha1(trim($user))]);
     $fila = $stmt->fetch(PDO::FETCH_ASSOC);
-    if (!$fila) return false;
+    if (!$fila)
+        return false;
 
     $guardada = $fila['password'];
 
@@ -79,9 +80,14 @@ function verificarUsuario(PDO $conexion, string $user, string $password)
 
     // Formato antiguo SHA1: valida y migra al vuelo
     if (hash_equals($guardada, sha1($password))) {
-        $nuevo = password_hash($password, PASSWORD_DEFAULT);
-        $conexion->prepare('UPDATE usuarios SET `password` = :p WHERE `user` = :u')
-                 ->execute([':p' => $nuevo, ':u' => sha1(trim($user))]);
+        try {
+            $nuevo = password_hash($password, PASSWORD_DEFAULT);
+            $conexion->prepare('UPDATE usuarios SET `password` = :p WHERE `user` = :u')
+                ->execute([':p' => $nuevo, ':u' => sha1(trim($user))]);
+        } catch (Throwable $e) {
+            // No bloquea el acceso: se reintentará en el próximo login
+            error_log('[login] No se pudo migrar el password: ' . $e->getMessage());
+        }
         return $fila;
     }
     return false;
@@ -177,7 +183,7 @@ if ($cone && $_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         } catch (Throwable $e) {
             error_log('[login] ' . $e->getMessage());
-            $error = 'Ocurrió un error. Intenta de nuevo.';
+            $error = 'DEBUG: ' . $e->getMessage() . ' en ' . basename($e->getFile()) . ':' . $e->getLine();
         }
     }
 }
