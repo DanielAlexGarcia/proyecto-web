@@ -18,7 +18,7 @@ $citasPaciente = [];
 $errorCarga = '';
 
 try {
-    $db = new conexionBaseDatos();
+    $db = conexionBaseDatos::getInstancia();
     $pdo = $db->getConexion();
 
     $listaDoctores = $pdo->query(

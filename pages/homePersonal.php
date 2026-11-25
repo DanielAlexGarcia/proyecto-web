@@ -10,7 +10,7 @@ require_once __DIR__ . '/../php/validacionesCita.php';
 require_once __DIR__ . '/../php/validaciones/validacionesPersona.php';
 require_once __DIR__ . '/../php/modelosDAO/citaDAO.php';
 
-$pdo = (new conexionBaseDatos())->getConexion();
+$pdo = conexionBaseDatos::getInstancia()->getConexion();
 $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 $empleadoActual = [
     'id_persona' => (int) $u['id_persona'],

@@ -2,13 +2,15 @@
 
 class conexionBaseDatos
 {
+    private static ?conexionBaseDatos $instancia = null;
+
     private $host = 'localhost';
     private $usuario = 'root';
     private $contrasena = '';
     private $base_de_datos = 'clinica';
     private $conexion;
 
-    public function __construct()
+    private function __construct()      // antes: public
     {
         try {
             $this->conexion = new PDO(
@@ -16,14 +18,23 @@ class conexionBaseDatos
                 $this->usuario,
                 $this->contrasena
             );
-
-            // Activar excepciones en PDO para manejo de errores
             $this->conexion->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
         } catch (PDOException $e) {
             die("Error de conexión: " . $e->getMessage());
         }
     }
+
+    public static function getInstancia(): self
+    {
+        if (self::$instancia === null) {
+            self::$instancia = new self();
+        }
+        return self::$instancia;
+    }
+
+    private function __clone() {}
+    public function __wakeup() { throw new Exception('No se puede deserializar un Singleton.'); }
+
 
     // Método para obtener la conexión activa
     public function getConexion()

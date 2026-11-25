@@ -13,7 +13,7 @@ foreach (glob('../modelosDAO/*.php') as $dao) {
     require_once $dao;
 }
 
-$cons = new conexionBaseDatos();
+$cons = conexionBaseDatos::getInstancia();
 $conexion = $cons->getConexion();
 $metodo = $_SERVER['REQUEST_METHOD'];
 

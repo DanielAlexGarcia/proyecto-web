@@ -6,7 +6,7 @@ header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../baseDatos/conexionBaseDatos.php';
 require_once __DIR__ . '/../modelosDAO/newUserPacDAO.php';
 
-$cons     = new conexionBaseDatos();
+$cons     = conexionBaseDatos::getInstancia();
 $conexion = $cons->getConexion();
 $dao      = new NewUsersPacDAO($conexion);
 $metodo   = $_SERVER['REQUEST_METHOD'];

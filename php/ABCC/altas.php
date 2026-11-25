@@ -25,7 +25,7 @@ require_once __DIR__ . '/../validaciones/validacionesPersona.php';
 
 $u = requerirSesionApi(['paciente', 'personal']);
 
-$db = new conexionBaseDatos();
+$db = conexionBaseDatos::getInstancia();
 $pdo = $db->getConexion();
 
 // ---------------------------------------------------------------------------

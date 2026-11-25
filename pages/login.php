@@ -56,7 +56,7 @@ $error = '';
 $cone = null;
 
 try {
-    $con = new conexionBaseDatos();
+    $con = conexionBaseDatos::getInstancia();
     $cone = $con->getConexion();
 } catch (Throwable $e) {
     $error = 'No se pudo conectar a la base de datos.';
