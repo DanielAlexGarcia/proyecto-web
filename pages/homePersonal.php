@@ -254,6 +254,7 @@ $empleados = leer($pdo, "
 $registrosAuditoria = leer($pdo, "SELECT * FROM registros ORDER BY id DESC LIMIT 15", $erroresLectura);
 
 $jsonAttr = JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG;
+
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -547,6 +548,8 @@ $jsonAttr = JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG;
             color: #64748b;
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+<script src="JS/popperValidacion.js"></script>
 </head>
 
 <body>
@@ -559,6 +562,7 @@ $jsonAttr = JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG;
             (<?= htmlspecialchars($empleadoActual['especializacion'] ?: 'General') ?>)
             <a href="close.php" class="btn-logout">Cerrar sesión</a>
         </div>
+        
     </header>
 
     <div class="container">

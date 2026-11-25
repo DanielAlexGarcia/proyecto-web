@@ -72,6 +72,8 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+    <script src="JS/popperValidacion.js"></script>
     <style>
         body {
             background: #f8fafc;
@@ -701,8 +703,10 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
         }
 
         // ---------- Interfaz ----------
-        function closeModal(id) { document.getElementById(id).classList.replace('flex', 'hidden'); }
-
+        function closeModal(id) {
+            Validacion.limpiarTodos(document.getElementById(id));
+            document.getElementById(id).classList.replace('flex', 'hidden');
+        }
         function setStatusFilter(status) {
             currentStatusFilter = status;
             ['Todas', 'Pendiente', 'Confirmada'].forEach(tab => {

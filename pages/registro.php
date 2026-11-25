@@ -1,125 +1,115 @@
 <?php
-/*
-** COMPROVACION DE ERRORES **
 
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
-$archivos = [
-    __DIR__ . '/../php/baseDatos/conexionBaseDatos.php',
-    __DIR__ . '/../php/modelos/persona.php',
-    __DIR__ . '/../php/modelosDAO/personaDAO.php',
-];
-foreach ($archivos as $a) {
-    echo $a . ' → ' . (file_exists($a) ? 'OK' : 'NO EXISTE') . '<br>';
-}
-*/
 
 require_once __DIR__ . '/../php/baseDatos/conexionBaseDatos.php';
 require_once __DIR__ . '/../php/modelos/persona.php';
 require_once __DIR__ . '/../php/modelosDAO/personaDAO.php';
 
-function newPaciente($names, $APS, $fechaNac, $tel, $direction, $correo, $User, $pass){
-    $db = new conexionBaseDatos();
-    $conexion = $db->getConexion();
+function newPaciente($names, $APS, $fechaNac, $tel, $direction, $correo, $User, $pass)
+{
+  $db = new conexionBaseDatos();
+  $conexion = $db->getConexion();
 
-    // Separar apellidos en primer y segundo apellido para el modelo persona
-    $partesApellidos = explode(' ', trim($APS), 2);
-    $primerApellido  = $partesApellidos[0] ?? '';
-    $segundoApellido = $partesApellidos[1] ?? '';
+  // Separar apellidos en primer y segundo apellido para el modelo persona
+  $partesApellidos = explode(' ', trim($APS), 2);
+  $primerApellido = $partesApellidos[0] ?? '';
+  $segundoApellido = $partesApellidos[1] ?? '';
 
-    try {
-        $conexion->beginTransaction();
+  try {
+    $conexion->beginTransaction();
 
-        // 1. Dar de alta a la Persona usando PersonaDAO
-        $nuevaPersona = new persona(
-            trim($names),
-            $primerApellido,
-            $segundoApellido,
-            $fechaNac,
-            "M",
-            trim($direction)
-        );
+    // 1. Dar de alta a la Persona usando PersonaDAO
+    $nuevaPersona = new persona(
+      trim($names),
+      $primerApellido,
+      $segundoApellido,
+      $fechaNac,
+      "M",
+      trim($direction)
+    );
 
-        $personaDAO = new PersonaDAO($conexion);
-        if (!$personaDAO->insertar($nuevaPersona)) {
-            throw new Exception('No se pudo registrar la persona.');
-        }
-
-        $idPersona = (int) $conexion->lastInsertId();
-
-        // 2. Dar de alta en la tabla users con user y password encriptados en SHA1
-        $sqlUser = "INSERT INTO users (user, password, name) VALUES (SHA1(:user), SHA1(:password), :name)";
-        $stmtUser = $conexion->prepare($sqlUser);
-
-        $nombreCompleto = trim($names . ' ' . $APS);
-
-        $exitoUser = $stmtUser->execute([
-            ':user'     => sha1(trim($User)),
-            ':password' => sha1($pass),
-            ':name'     => $nombreCompleto
-        ]);
-
-        if (!$exitoUser) {
-            throw new Exception('No se pudo crear el usuario.');
-        }
-
-        $conexion->commit();
-
-        return [
-            'ok'        => true,
-            'idPersona' => $idPersona,
-            'mensaje'   => 'Paciente y usuario registrados correctamente.'
-        ];
-
-    } catch (Exception $e) {
-        if ($conexion->inTransaction()) {
-            $conexion->rollBack();
-        }
-        return [
-            'ok'    => false,
-            'error' => $e->getMessage()
-        ];
+    $personaDAO = new PersonaDAO($conexion);
+    if (!$personaDAO->insertar($nuevaPersona)) {
+      throw new Exception('No se pudo registrar la persona.');
     }
+
+    $idPersona = (int) $conexion->lastInsertId();
+
+    // 2. Dar de alta en la tabla users con user y password encriptados en SHA1
+    $sqlUser = "INSERT INTO users (user, password, name) VALUES (SHA1(:user), SHA1(:password), :name)";
+    $stmtUser = $conexion->prepare($sqlUser);
+
+    $nombreCompleto = trim($names . ' ' . $APS);
+
+    $exitoUser = $stmtUser->execute([
+      ':user' => sha1(trim($User)),
+      ':password' => sha1($pass),
+      ':name' => $nombreCompleto
+    ]);
+
+    if (!$exitoUser) {
+      throw new Exception('No se pudo crear el usuario.');
+    }
+
+    $conexion->commit();
+
+    return [
+      'ok' => true,
+      'idPersona' => $idPersona,
+      'mensaje' => 'Paciente y usuario registrados correctamente.'
+    ];
+
+  } catch (Exception $e) {
+    if ($conexion->inTransaction()) {
+      $conexion->rollBack();
+    }
+    return [
+      'ok' => false,
+      'error' => $e->getMessage()
+    ];
+  }
 }
 
 // Procesar la petición POST enviada desde el formulario vía fetch()
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    header('Content-Type: application/json; charset=utf-8');
-    $db = new conexionBaseDatos();
-    $datos = $db->leerJSON();
+  header('Content-Type: application/json; charset=utf-8');
+  $db = new conexionBaseDatos();
+  $datos = $db->leerJSON();
 
-    if (!$datos) {
-        $db->responder(400, ['error' => 'Datos JSON inválidos o vacíos.']);
-    }
+  if (!$datos) {
+    $db->responder(400, ['error' => 'Datos JSON inválidos o vacíos.']);
+  }
 
-    $resultado = newPaciente(
-        $datos['names']     ?? '',
-        $datos['APS']       ?? '',
-        $datos['fechaNac']  ?? '',
-        $datos['tel']       ?? '',
-        $datos['direction'] ?? '',
-        $datos['correo']    ?? '',
-        $datos['User']      ?? ($datos['correo'] ?? ''),
-        $datos['pass']      ?? ''
-    );
+  $resultado = newPaciente(
+    $datos['names'] ?? '',
+    $datos['APS'] ?? '',
+    $datos['fechaNac'] ?? '',
+    $datos['tel'] ?? '',
+    $datos['direction'] ?? '',
+    $datos['correo'] ?? '',
+    $datos['User'] ?? ($datos['correo'] ?? ''),
+    $datos['pass'] ?? ''
+  );
 
-    if ($resultado['ok']) {
-        $db->responder(201, $resultado);
-    } else {
-        $db->responder(500, ['error' => $resultado['error']]);
-    }
+  if ($resultado['ok']) {
+    $db->responder(201, $resultado);
+  } else {
+    $db->responder(500, ['error' => $resultado['error']]);
+  }
 }
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Registro de paciente | Clínica Bienestar</title>
   <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+<script src="JS/popperValidacion.js"></script>
 </head>
+
 <body>
   <main class="auth">
     <div class="card w">
@@ -181,7 +171,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <label style="display:flex;gap:.5rem;font-weight:400;align-items:flex-start;margin-top:1.1rem">
-          <input id="priv" type="checkbox" required style="width:auto;margin-top:.3rem"> Acepto el aviso de privacidad y el tratamiento de mis datos de salud.
+          <input id="priv" type="checkbox" required style="width:auto;margin-top:.3rem"> Acepto el aviso de privacidad y
+          el tratamiento de mis datos de salud.
         </label>
 
         <button class="btn" type="submit">Registrarme</button>
@@ -196,8 +187,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   <script>
     const c = document.getElementById('c'),
-          b = document.getElementById('cob'),
-          l = document.getElementById('lnp');
+      b = document.getElementById('cob'),
+      l = document.getElementById('lnp');
 
     c.onchange = () => {
       const v = c.value;
@@ -208,36 +199,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     document.getElementById('f').onsubmit = async e => {
       e.preventDefault();
 
-      const names     = document.getElementById('n').value.trim();
-      const APS       = document.getElementById('a').value.trim();
-      const fechaNac  = document.getElementById('fn').value;
-      const tel       = document.getElementById('t').value.trim();
+      const names = document.getElementById('n').value.trim();
+      const APS = document.getElementById('a').value.trim();
+      const fechaNac = document.getElementById('fn').value;
+      const tel = document.getElementById('t').value.trim();
       const direction = document.getElementById('d').value.trim();
-      const correo    = document.getElementById('e').value.trim();
-      const p1        = document.getElementById('p1').value;
-      const p2        = document.getElementById('p2').value;
-      const priv      = document.getElementById('priv').checked;
+      const correo = document.getElementById('e').value.trim();
+      const p1 = document.getElementById('p1').value;
+      const p2 = document.getElementById('p2').value;
+      const priv = document.getElementById('priv').checked;
 
-      if (!names || !APS || !fechaNac || !tel || !direction || !correo || !p1) {
-        alert('Por favor completa todos los campos obligatorios.');
-        return;
-      }
+      const f = document.getElementById('f');
+      Validacion.activar(f, {
+        reglas: {
+          p2: (v) => v !== document.getElementById('p1').value ? 'Las contraseñas no coinciden.' : null,
+          fn: (v) => v > new Date().toISOString().slice(0, 10) ? 'La fecha no puede ser futura.' : null
+        }
+      });
 
-      if (p1.length < 8) {
-        alert('La contraseña debe tener al menos 8 caracteres.');
-        return;
-      }
-
-      if (p1 !== p2) {
-        alert('Las contraseñas no coinciden.');
-        return;
-      }
-
-      if (!priv) {
-        alert('Debes aceptar el aviso de privacidad.');
-        return;
-      }
-
+      f.onsubmit = async e => {
+        e.preventDefault();
+        // ...lee los campos y hace el fetch igual que antes...
+        if (res.ok) {
+          window.location.href = 'login';
+        } else {
+          Validacion.mostrarError(document.getElementById('e'), data.error || 'Ocurrió un error al registrar.');
+        }
+      };
       try {
         const res = await fetch(window.location.href, {
           method: 'POST',
@@ -268,4 +256,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     };
   </script>
 </body>
+
 </html>

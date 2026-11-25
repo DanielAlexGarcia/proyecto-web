@@ -68,28 +68,16 @@ function verificarUsuario(PDO $conexion, string $user, string $password)
     $stmt = $conexion->prepare('SELECT * FROM usuarios WHERE `user` = :u LIMIT 1');
     $stmt->execute([':u' => sha1(trim($user))]);
     $fila = $stmt->fetch(PDO::FETCH_ASSOC);
-    if (!$fila)
+
+    if (!$fila) {
         return false;
-
-    $guardada = $fila['password'];
-
-    // Ya migrada a bcrypt/argon
-    if (strncmp($guardada, '$2y$', 4) === 0 || strncmp($guardada, '$argon2', 7) === 0) {
-        return password_verify($password, $guardada) ? $fila : false;
     }
 
-    // Formato antiguo SHA1: valida y migra al vuelo
-    if (hash_equals($guardada, sha1($password))) {
-        try {
-            $nuevo = password_hash($password, PASSWORD_DEFAULT);
-            $conexion->prepare('UPDATE usuarios SET `password` = :p WHERE `user` = :u')
-                ->execute([':p' => $nuevo, ':u' => sha1(trim($user))]);
-        } catch (Throwable $e) {
-            // No bloquea el acceso: se reintentará en el próximo login
-            error_log('[login] No se pudo migrar el password: ' . $e->getMessage());
-        }
+    // Validación directa en SHA1 (VARCHAR 40) sin migrar el cifrado
+    if (hash_equals($fila['password'], sha1($password))) {
         return $fila;
     }
+
     return false;
 }
 
@@ -198,6 +186,8 @@ $captchaImg = generarCaptcha();
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Iniciar sesión | Clínica Bienestar</title>
     <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+    <script src="JS/popperValidacion.js"></script>
 </head>
 
 <body>
