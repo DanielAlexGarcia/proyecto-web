@@ -80,9 +80,9 @@
     if (v.tooShort) return `Debe tener al menos ${c.minLength} caracteres.`;
     if (v.tooLong) return `No puede exceder ${c.maxLength} caracteres.`;
     if (v.patternMismatch) return c.title || 'El formato no es válido.';
-    if (v.rangeUnderflow) return c.type === 'date' ? 'La fecha es anterior a la permitida.' : `El valor mínimo es ${c.min}.`;
-    if (v.rangeOverflow) return c.type === 'date' ? 'La fecha es posterior a la permitida.' : `El valor máximo es ${c.max}.`;
-    return c.validationMessage;
+    if (v.rangeUnderflow) return (c.type === 'date' || c.type === 'datetime-local') ? 'La fecha es anterior a la permitida.' : `El valor mínimo es ${c.min}.`;
+if (v.rangeOverflow)  return (c.type === 'date' || c.type === 'datetime-local') ? 'La fecha es posterior a la permitida.' : `El valor máximo es ${c.max}.`;
+return c.validationMessage;
   }
 
   /**

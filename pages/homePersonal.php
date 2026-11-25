@@ -6,6 +6,9 @@ require_once __DIR__ . '/../php/auth/autenticacion.php';
 $u = requerirSesionPagina('personal', 'login');
 
 require_once __DIR__ . '/../php/baseDatos/conexionBaseDatos.php';
+require_once __DIR__ . '/../php/validacionesCita.php';
+require_once __DIR__ . '/../php/validacionesPersona.php';
+require_once __DIR__ . '/../php/modelosDAO/citaDAO.php';
 
 $pdo = (new conexionBaseDatos())->getConexion();
 $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
@@ -108,6 +111,36 @@ $esFetch = ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'fetch';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
+
+ValidadorCitas::$lanzarExcepcion = true;
+
+if (in_array($accion, ['crear_paciente_nuevo', 'editar_paciente'], true)) {
+    ValidadorPersonas::persona($_POST);
+}
+if (in_array($accion, ['crear_paciente_existente', 'crear_paciente_nuevo', 'editar_paciente'], true)) {
+    ValidadorPersonas::paciente($_POST);
+}
+if (in_array($accion, ['crear_paciente_existente', 'crear_paciente_nuevo'], true)) {
+    ValidadorPersonas::credenciales($_POST);
+}
+if (in_array($accion, ['crear_cita', 'editar_cita'], true)) {
+    $fh     = ValidadorCitas::validarFechaHora(fechaSQL(post('fecha_hora')), $accion === 'editar_cita', false);
+    $estado = ValidadorCitas::validarEstado(post('estado') ?: 'Pendiente');
+    $doc    = ValidadorCitas::validarEnteroPositivo(post('doctor_id'), 'doctor_id');
+    $_POST['motivo'] = ValidadorCitas::validarMotivo(post('motivo'));
+    if ($accion === 'crear_cita') {
+        ValidadorCitas::validarEnteroPositivo(post('paciente_id'), 'paciente_id');
+    }
+    $excluir = $accion === 'editar_cita' ? (int) post('id_cita') : null;
+    if (strtolower($estado) !== 'cancelada'
+        && (new CitaDAO($pdo))->existeChoque($doc, $fh, $excluir)) {
+        throw new InvalidArgumentException('Ese médico ya tiene una cita en ese horario.');
+    }
+}
+if (in_array($accion, ['consultar_fn_citas'], true)) {
+    ValidadorCitas::validarEnteroPositivo(post('paciente_id'), 'paciente_id');
+}
+
         // 1. Paciente desde persona existente (procedimiento almacenado)
         if ($accion === 'crear_paciente_existente') {
             $stmt = $pdo->prepare("CALL sp_crear_paciente_existente(:id_persona, :num_seguro, :grupo_sanguineo, :alergias, :user, :password)");
@@ -237,7 +270,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $resultadoFuncionEmpleados = (string) $stmt->fetchColumn();
         }
 
-    } catch (Throwable $e) {
+    } catch (InvalidArgumentException $e) {
+    $tipoMensaje = 'error';
+    $mensaje = $e->getMessage();
+} catch (Throwable $e) {
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
         }

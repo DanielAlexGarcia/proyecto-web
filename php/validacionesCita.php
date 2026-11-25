@@ -44,6 +44,9 @@ class ValidadorCitas
                 self::responderError(422, 'La fecha y hora de la cita deben ser futuras.');
             }
         }
+        if ($exigirBloque && !in_array($hora, self::HORARIOS_PERMITIDOS, true)) {
+    self::responderError(422, 'El horario seleccionado no es válido.');
+}
 
         return $fechaHora;
     }
@@ -76,9 +79,14 @@ class ValidadorCitas
         return $estado;
     }
 
-    public static function responderError(int $codigo, string $mensaje): never
-    {
-        http_response_code($codigo);
+    public static bool $lanzarExcepcion = false;
+
+public static function responderError(int $codigo, string $mensaje): never
+{
+    if (self::$lanzarExcepcion) {
+        throw new InvalidArgumentException($mensaje);
+    }
+    http_response_code($codigo);
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode(['ok' => false, 'error' => $mensaje], JSON_UNESCAPED_UNICODE);
         exit;

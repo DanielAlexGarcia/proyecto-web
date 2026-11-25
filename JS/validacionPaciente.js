@@ -43,7 +43,7 @@ function esMotivoTextoValido(motivo) {
     if (typeof motivo !== 'string') return false;
     const limpio = motivo.trim();
     if (limpio.length < 5 || limpio.length > 255) return false;
-    return /^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s.,;:()\-¿?¡!]+$/.test(limpio);
+    return /^[\p{L}\p{N}\s.,;:()\-¿?¡!]+$/u.test(limpio);
 }
 
 function marcarErrorCampo(idCampo, tieneError, mensaje) {

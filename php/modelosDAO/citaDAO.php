@@ -98,5 +98,16 @@ class CitaDAO
             $fila['doctor_id']
         );
     }
+    public function existeChoque(int $doctorId, string $fechaHora, ?int $excluirId = null): bool
+{
+    $stmt = $this->conexion->prepare(
+        "SELECT 1 FROM citas
+         WHERE doctor_id = :d AND fecha_hora = :f
+           AND LOWER(estado) <> 'cancelada' AND id <> :x
+         LIMIT 1"
+    );
+    $stmt->execute([':d' => $doctorId, ':f' => $fechaHora, ':x' => $excluirId ?? 0]);
+    return (bool) $stmt->fetchColumn();
+}
 }
 ?>

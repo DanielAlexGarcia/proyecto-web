@@ -99,6 +99,32 @@ if ($metodo === 'PUT') {
             $datos['doctorID'] = ValidadorCitas::validarEnteroPositivo($datos['doctorID'], 'doctorID');
         }
     }
+
+if ($u['tipo'] === 'personal') {
+    if ($tipoEntidad === 3) {
+        $datos['fechaHora'] = ValidadorCitas::validarFechaHora($datos['fechaHora'], true, false);
+        $datos['motivo']    = ValidadorCitas::validarMotivo($datos['motivo']);
+        $datos['estado']    = ValidadorCitas::validarEstado($datos['estado']);
+        $datos['doctorID']  = ValidadorCitas::validarEnteroPositivo($datos['doctorID'], 'doctorID');
+    } else {
+        require_once __DIR__ . '/../validacionesPersona.php';
+        try {
+            switch ($tipoEntidad) {
+                case 0: ValidadorPersonas::persona([
+                    'nombres' => $datos['nombres'], 'primer_apellido' => $datos['primerAP'],
+                    'segundo_apellido' => $datos['segundoAP'], 'fecha_nacimiento' => $datos['fechaNaci'],
+                    'genero' => $datos['genero'], 'direccion' => $datos['Direccion']]); break;
+                case 1: ValidadorPersonas::empleado($datos); break;
+                case 2: ValidadorPersonas::paciente([
+                    'num_seguro' => $datos['numSeguro'], 'grupo_sanguineo' => $datos['grupSanginio'],
+                    'alergias' => $datos['alergias']]); break;
+            }
+        } catch (InvalidArgumentException $e) {
+            $cons->responder(422, ['error' => $e->getMessage()]);
+        }
+    }
+}
+
     try {
         $exito = false;
         $entidadNombre = '';
@@ -157,6 +183,10 @@ if ($metodo === 'PUT') {
                     (int) $datos['doctorID']
                 );
                 $dao = new CitaDAO($conexion);
+                if (strtolower($datos['estado']) !== 'cancelada'
+    && (new CitaDAO($conexion))->existeChoque((int) $datos['doctorID'], $datos['fechaHora'], $idActualizado)) {
+    $cons->responder(409, ['error' => 'Ese médico ya tiene una cita en ese horario.']);
+}
                 $exito = $dao->actualizar($cita, $idActualizado);
                 break;
         }

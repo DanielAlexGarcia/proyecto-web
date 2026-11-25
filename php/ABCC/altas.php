@@ -21,6 +21,7 @@ require_once __DIR__ . '/../modelosDAO/personaDAO.php';
 require_once __DIR__ . '/../modelosDAO/pacienteDAO.php';
 require_once __DIR__ . '/../modelosDAO/empleadoDAO.php';
 require_once __DIR__ . '/../modelosDAO/citaDAO.php';
+require_once __DIR__ . '/../Validaciones/validacionesPersona.php';
 
 $u = requerirSesionApi(['paciente', 'personal']);
 
@@ -93,6 +94,20 @@ if ($u['tipo'] === 'paciente') {
         $datos['paciente_id'] = (int) $u['paciente_id']; // ignora lo que mande el cliente
         $datos['estado'] = 'Pendiente';
     }
+}
+
+try {
+    switch ($tipo) {
+        case 'persona':              ValidadorPersonas::persona($datos); break;
+        case 'paciente':             ValidadorPersonas::paciente($datos); break;
+        case 'paciente_existente':   ValidadorPersonas::paciente($datos); ValidadorPersonas::credenciales($datos); break;
+        case 'paciente_transaccion': ValidadorPersonas::persona($datos); ValidadorPersonas::paciente($datos); ValidadorPersonas::credenciales($datos); break;
+        case 'empleado':             ValidadorPersonas::empleado($datos); break;
+        case 'empleado_existente':   ValidadorPersonas::empleado($datos); ValidadorPersonas::credenciales($datos); break;
+        case 'empleado_transaccion': ValidadorPersonas::persona($datos); ValidadorPersonas::empleado($datos); ValidadorPersonas::credenciales($datos); break;
+    }
+} catch (InvalidArgumentException $e) {
+    $db->responder(422, ['ok' => false, 'error' => $e->getMessage()]);
 }
 
 try {
@@ -285,6 +300,10 @@ try {
                 (int) $datos['paciente_id'],
                 (int) $datos['doctor_id']
             );
+
+            if ((new CitaDAO($pdo))->existeChoque((int) $datos['doctor_id'], $datos['fecha_hora'])) {
+    $db->responder(409, ['ok' => false, 'error' => 'Ese médico ya tiene una cita en ese horario.']);
+}
 
             (new CitaDAO($pdo))->insertar($cita);
 
