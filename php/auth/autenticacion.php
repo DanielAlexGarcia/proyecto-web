@@ -115,3 +115,26 @@ function requerirSesionApi(array $tipos = ['paciente', 'personal']): array
     }
     return $u;
 }
+/**
+ * Igual que requerirSesionApi(['personal']), pero además exige que el
+ * cargo del empleado esté en la lista. Comparación sin distinguir mayúsculas.
+ */
+function requerirCargoApi(array $cargosPermitidos): array
+{
+    $u = requerirSesionApi(['personal']);
+
+    $cargo = mb_strtolower(trim($u['cargo'] ?? ''), 'UTF-8');
+    $permitidos = array_map(
+        fn($c) => mb_strtolower(trim($c), 'UTF-8'),
+        $cargosPermitidos
+    );
+
+    if (!in_array($cargo, $permitidos, true)) {
+        http_response_code(403);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['error' => 'Tu cargo no tiene permisos para esta acción.'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+    return $u;
+}
+?>

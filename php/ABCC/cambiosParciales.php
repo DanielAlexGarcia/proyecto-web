@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../auth/autenticacion.php';
-$u = requerirSesionApi(['personal']);
+$u = requerirCargoApi(['administrador']);
 header('Content-Type: application/json; charset=utf-8');
 
 include_once __DIR__ . '/../baseDatos/conexionBaseDatos.php';
