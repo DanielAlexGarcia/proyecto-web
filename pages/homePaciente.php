@@ -231,20 +231,25 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
                         <p class="text-sm text-slate-500">No tienes consultas próximas registradas.</p>
                     </template>
                     <template x-if="nearestAppointment">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/80 rounded-2xl p-4 border border-sky-100">
+                        <div
+                            class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/80 rounded-2xl p-4 border border-sky-100">
                             <div class="flex items-center gap-3.5">
                                 <div class="w-12 h-12 rounded-xl bg-sky-100 text-[#0284c7] flex items-center justify-center font-bold text-xs text-center px-1 shrink-0"
-                                     x-text="getDaysRemainingLabel(nearestAppointment.fecha_hora)"></div>
+                                    x-text="getDaysRemainingLabel(nearestAppointment.fecha_hora)"></div>
                                 <div>
-                                    <p class="text-[11px] font-semibold uppercase tracking-wider text-[#0d9488]">Tu consulta más cercana</p>
+                                    <p class="text-[11px] font-semibold uppercase tracking-wider text-[#0d9488]">Tu
+                                        consulta más cercana</p>
                                     <p class="text-sm font-bold text-slate-900"
-                                       x-text="`${nearestAppointment.especialidad} — Dr(a). ${nearestAppointment.nombre_doctor}`"></p>
+                                        x-text="`${nearestAppointment.especialidad} — Dr(a). ${nearestAppointment.nombre_doctor}`">
+                                    </p>
                                     <p class="text-xs text-slate-600 capitalize"
-                                       x-text="`${formatDateSpanish(nearestAppointment.fecha_hora)} a las ${formatTime12h(nearestAppointment.fecha_hora)}`"></p>
+                                        x-text="`${formatDateSpanish(nearestAppointment.fecha_hora)} a las ${formatTime12h(nearestAppointment.fecha_hora)}`">
+                                    </p>
                                 </div>
                             </div>
                             <button type="button" @click="openModifyModal(nearestAppointment.id)"
-                                class="text-xs font-semibold text-[#0284c7] hover:underline self-start sm:self-center">Cambiar horario →</button>
+                                class="text-xs font-semibold text-[#0284c7] hover:underline self-start sm:self-center">Cambiar
+                                horario →</button>
                         </div>
                     </template>
                 </div>
@@ -272,33 +277,44 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
                 <!-- Lista de citas (actualización reactiva) -->
                 <div class="space-y-4">
                     <template x-if="filteredAppointments.length === 0">
-                        <div class="bg-white rounded-2xl border border-dashed border-slate-300 p-10 text-center space-y-3">
+                        <div
+                            class="bg-white rounded-2xl border border-dashed border-slate-300 p-10 text-center space-y-3">
                             <p class="text-base font-bold text-slate-800">No tienes citas en esta categoría</p>
                             <button type="button" @click="openScheduleModal()"
-                                class="px-5 py-2.5 rounded-xl bg-[#0284c7] text-white text-sm font-semibold hover:bg-[#0369a1]">+ Agendar nueva cita</button>
+                                class="px-5 py-2.5 rounded-xl bg-[#0284c7] text-white text-sm font-semibold hover:bg-[#0369a1]">+
+                                Agendar nueva cita</button>
                         </div>
                     </template>
 
                     <template x-for="c in filteredAppointments" :key="c.id">
-                        <article class="bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md hover:border-sky-200 transition-all p-5 sm:p-6">
+                        <article
+                            class="bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md hover:border-sky-200 transition-all p-5 sm:p-6">
                             <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                                 <div class="space-y-2.5">
                                     <div class="flex flex-wrap items-center gap-2">
                                         <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold border"
                                             :class="c.estado.toLowerCase() === 'confirmada' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-sky-50 text-[#0284c7] border-sky-200'"
                                             x-text="c.estado"></span>
-                                        <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200/70"
+                                        <span
+                                            class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200/70"
                                             x-text="getDaysRemainingLabel(c.fecha_hora)"></span>
-                                        <span class="text-xs text-slate-400 font-medium" x-text="`Cita #${c.id}`"></span>
+                                        <span class="text-xs text-slate-400 font-medium"
+                                            x-text="`Cita #${c.id}`"></span>
                                     </div>
                                     <div>
                                         <h3 class="text-lg font-bold text-slate-900" x-text="c.especialidad"></h3>
-                                        <p class="text-sm font-medium text-slate-700" x-text="`Dr(a). ${c.nombre_doctor}`"></p>
+                                        <p class="text-sm font-medium text-slate-700"
+                                            x-text="`Dr(a). ${c.nombre_doctor}`"></p>
                                     </div>
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-600">
-                                        <div><span class="font-semibold text-slate-800">Fecha:</span> <span class="capitalize" x-text="formatDateSpanish(c.fecha_hora)"></span></div>
-                                        <div><span class="font-semibold text-slate-800">Hora:</span> <span x-text="formatTime12h(c.fecha_hora)"></span></div>
-                                        <div class="sm:col-span-2"><span class="font-semibold text-slate-800">Motivo:</span> <span x-text="c.motivo"></span></div>
+                                        <div><span class="font-semibold text-slate-800">Fecha:</span> <span
+                                                class="capitalize" x-text="formatDateSpanish(c.fecha_hora)"></span>
+                                        </div>
+                                        <div><span class="font-semibold text-slate-800">Hora:</span> <span
+                                                x-text="formatTime12h(c.fecha_hora)"></span></div>
+                                        <div class="sm:col-span-2"><span
+                                                class="font-semibold text-slate-800">Motivo:</span> <span
+                                                x-text="c.motivo"></span></div>
                                     </div>
                                 </div>
                                 <div class="flex sm:flex-col gap-2 shrink-0">
@@ -356,7 +372,8 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
                 <button type="button" @click="closeModal('schedule')"
                     class="p-2 rounded-xl hover:bg-white/15">✕</button>
             </div>
-            <form id="form-schedule" @submit.prevent="handleScheduleSubmit($event)" class="p-6 space-y-4 overflow-y-auto">
+            <form id="form-schedule" @submit.prevent="handleScheduleSubmit($event)"
+                class="p-6 space-y-4 overflow-y-auto">
                 <div>
                     <label for="sched-doctor"
                         class="block text-xs font-semibold text-slate-700 uppercase mb-1.5">Médico</label>
@@ -366,7 +383,8 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
                             <option value="">No hay médicos disponibles</option>
                         </template>
                         <template x-for="d in doctorsList" :key="d.doctor_id">
-                            <option :value="d.doctor_id" x-text="`Dr(a). ${d.nombre_doctor} — ${d.especialidad}`"></option>
+                            <option :value="d.doctor_id" x-text="`Dr(a). ${d.nombre_doctor} — ${d.especialidad}`">
+                            </option>
                         </template>
                     </select>
                 </div>
@@ -391,7 +409,8 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
                 <div>
                     <label for="sched-reason" class="block text-xs font-semibold text-slate-700 uppercase mb-1.5">Motivo
                         de consulta</label>
-                    <input type="text" id="sched-reason" x-model="schedForm.reason" required placeholder="Ej. Revisión general"
+                    <input type="text" id="sched-reason" x-model="schedForm.reason" required
+                        placeholder="Ej. Revisión general"
                         class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm">
                 </div>
                 <div class="pt-3 flex justify-end gap-2 border-t border-slate-100">
@@ -415,8 +434,7 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
                     <h3 class="text-lg font-bold">Modificar Cita</h3>
                     <p class="text-xs text-sky-100">Actualiza especialista, fecha, hora o motivo</p>
                 </div>
-                <button type="button" @click="closeModal('modify')"
-                    class="p-2 rounded-xl hover:bg-white/15">✕</button>
+                <button type="button" @click="closeModal('modify')" class="p-2 rounded-xl hover:bg-white/15">✕</button>
             </div>
             <form @submit.prevent="handleModifySubmit()" class="p-6 space-y-4 overflow-y-auto">
                 <div>
@@ -426,7 +444,8 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
                         class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm">
                         <template x-for="c in appointments" :key="c.id">
                             <option :value="c.id"
-                                x-text="`#${c.id} — ${c.especialidad} (${splitFechaHora(c.fecha_hora).datePart} ${formatTime12h(c.fecha_hora)})`"></option>
+                                x-text="`#${c.id} — ${c.especialidad} (${splitFechaHora(c.fecha_hora).datePart} ${formatTime12h(c.fecha_hora)})`">
+                            </option>
                         </template>
                     </select>
                 </div>
@@ -436,7 +455,8 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
                     <select id="mod-doctor" x-model="modForm.doctor_id" required
                         class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm">
                         <template x-for="d in doctorsList" :key="d.doctor_id">
-                            <option :value="d.doctor_id" x-text="`Dr(a). ${d.nombre_doctor} — ${d.especialidad}`"></option>
+                            <option :value="d.doctor_id" x-text="`Dr(a). ${d.nombre_doctor} — ${d.especialidad}`">
+                            </option>
                         </template>
                     </select>
                 </div>
@@ -484,8 +504,7 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
                     <h3 class="text-lg font-bold">Cancelar Cita</h3>
                     <p class="text-xs text-rose-100">La cita cambiará a estado Cancelada</p>
                 </div>
-                <button type="button" @click="closeModal('cancel')"
-                    class="p-2 rounded-xl hover:bg-white/15">✕</button>
+                <button type="button" @click="closeModal('cancel')" class="p-2 rounded-xl hover:bg-white/15">✕</button>
             </div>
             <form @submit.prevent="handleCancelSubmit()" class="p-6 space-y-4">
                 <div>
@@ -495,7 +514,8 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
                         class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm">
                         <template x-for="c in appointments" :key="c.id">
                             <option :value="c.id"
-                                x-text="`#${c.id} — ${c.especialidad} con Dr(a). ${c.nombre_doctor} (${splitFechaHora(c.fecha_hora).datePart})`"></option>
+                                x-text="`#${c.id} — ${c.especialidad} con Dr(a). ${c.nombre_doctor} (${splitFechaHora(c.fecha_hora).datePart})`">
+                            </option>
                         </template>
                     </select>
                 </div>
@@ -518,8 +538,7 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
                     'bg-slate-900 border-emerald-500': t.type === 'success',
                     'bg-rose-950 border-rose-500': t.type === 'error',
                     'bg-sky-950 border-sky-400': t.type === 'info'
-                }"
-                x-text="t.message"></div>
+                }" x-text="t.message"></div>
         </template>
     </div>
 
@@ -651,10 +670,21 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
                 },
 
                 async handleScheduleSubmit(e) {
+                    const v = validarAgendarCita({
+                        doctorId: this.schedForm.doctor_id,
+                        fecha: this.schedForm.date,
+                        hora: this.schedForm.time,
+                        motivo: this.schedForm.reason
+                    }, {
+                        doctorsList: this.doctorsList,
+                        appointments: this.appointments,
+                        HORARIOS: this.HORARIOS
+                    });
+                    if (!v.valido) return;
+
                     const doctorId = Number(this.schedForm.doctor_id);
                     const reason = this.schedForm.reason.trim();
                     const fechaHora = `${this.schedForm.date} ${this.schedForm.time}`;
-                    if (!doctorId) return this.showToast('Selecciona un médico.', 'error');
 
                     try {
                         const { ok, data } = await this.llamarAPI(this.API_URLS.altas, 'POST', {

@@ -25,7 +25,7 @@ function esFechaValidaYActual(fechaStr) {
     return fechaStr >= localISODate(0);
 }
 
-function esHorarioPermitido(horaStr, fechaStr) {
+function esHorarioPermitido(horaStr, fechaStr, HORARIOS = []) {
     if (typeof horaStr !== 'string') return false;
     const horasValidas = new Set(HORARIOS.map(([valor]) => valor));
     if (!horasValidas.has(horaStr)) return false;
@@ -46,71 +46,60 @@ function esMotivoTextoValido(motivo) {
     return /^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s.,;:()\-¿?¡!]+$/.test(limpio);
 }
 
-function marcarErrorCampo(idCampo, tieneError) {
+function marcarErrorCampo(idCampo, tieneError, mensaje) {
     const el = document.getElementById(idCampo);
     if (!el) return;
-
-    el.classList.toggle('border-rose-500', tieneError);
-    el.classList.toggle('ring-2', tieneError);
-    el.classList.toggle('ring-rose-200', tieneError);
-
-    if (tieneError && !el.dataset.listenerError) {
-        el.dataset.listenerError = '1';
-        const limpiar = () => {
-            el.classList.remove('border-rose-500', 'ring-2', 'ring-rose-200');
-        };
-        el.addEventListener('input', limpiar, { once: true });
-        el.addEventListener('change', limpiar, { once: true });
-    }
+    if (tieneError) Validacion.mostrarError(el, mensaje);
+    else Validacion.limpiarError(el);
 }
 
-function validarAgendarCita({ doctorId, fecha, hora, motivo }) {
+function validarAgendarCita({ doctorId, fecha, hora, motivo }, { doctorsList = [], HORARIOS = [] } = {}) {
     const doctorOk = esEnteroPositivo(doctorId) && doctorsList.some(d => d.doctor_id === Number(doctorId));
-    marcarErrorCampo('sched-doctor', !doctorOk);
+    marcarErrorCampo('sched-doctor', !doctorOk, 'Selecciona un médico válido de la lista.');
     if (!doctorOk) return { valido: false, mensaje: 'Selecciona un médico válido de la lista.' };
 
     const fechaOk = esFechaValidaYActual(fecha);
-    marcarErrorCampo('sched-date', !fechaOk);
+    marcarErrorCampo('sched-date', !fechaOk, 'Ingresa una fecha válida igual o posterior a hoy.');
     if (!fechaOk) return { valido: false, mensaje: 'Ingresa una fecha válida igual o posterior a hoy.' };
 
-    const horaOk = esHorarioPermitido(hora, fecha);
-    marcarErrorCampo('sched-time', !horaOk);
+    const horaOk = esHorarioPermitido(hora, fecha, HORARIOS);
+    marcarErrorCampo('sched-time', !horaOk, 'Selecciona un horario disponible válido.');
     if (!horaOk) return { valido: false, mensaje: 'Selecciona un horario disponible válido.' };
 
     const motivoOk = esMotivoTextoValido(motivo);
-    marcarErrorCampo('sched-reason', !motivoOk);
+    marcarErrorCampo('sched-reason', !motivoOk, 'El motivo debe tener entre 5 y 255 caracteres sin símbolos especiales.');
     if (!motivoOk) return { valido: false, mensaje: 'El motivo debe tener entre 5 y 255 caracteres sin símbolos especiales.' };
 
     return { valido: true, mensaje: '' };
 }
 
-function validarModificarCita({ citaId, doctorId, fecha, hora, motivo }) {
+function validarModificarCita({ citaId, doctorId, fecha, hora, motivo }, { appointments = [], doctorsList = [], HORARIOS = [] } = {}) {
     const citaOk = esEnteroPositivo(citaId) && appointments.some(c => c.id === Number(citaId));
-    marcarErrorCampo('mod-select-cita', !citaOk);
+    marcarErrorCampo('mod-select-cita', !citaOk, 'La cita seleccionada no es válida.');
     if (!citaOk) return { valido: false, mensaje: 'La cita seleccionada no es válida.' };
 
     const doctorOk = esEnteroPositivo(doctorId) && doctorsList.some(d => d.doctor_id === Number(doctorId));
-    marcarErrorCampo('mod-doctor', !doctorOk);
+    marcarErrorCampo('mod-doctor', !doctorOk, 'Selecciona un médico válido de la lista.');
     if (!doctorOk) return { valido: false, mensaje: 'Selecciona un médico válido de la lista.' };
 
     const fechaOk = esFechaValidaYActual(fecha);
-    marcarErrorCampo('mod-date', !fechaOk);
+    marcarErrorCampo('mod-date', !fechaOk, 'La nueva fecha debe ser válida y no anterior a hoy.');
     if (!fechaOk) return { valido: false, mensaje: 'La nueva fecha debe ser válida y no anterior a hoy.' };
 
-    const horaOk = esHorarioPermitido(hora, fecha);
-    marcarErrorCampo('mod-time', !horaOk);
+    const horaOk = esHorarioPermitido(hora, fecha, HORARIOS);
+    marcarErrorCampo('mod-time', !horaOk, 'Selecciona un nuevo horario válido.');
     if (!horaOk) return { valido: false, mensaje: 'Selecciona un nuevo horario válido.' };
 
     const motivoOk = esMotivoTextoValido(motivo);
-    marcarErrorCampo('mod-reason', !motivoOk);
+    marcarErrorCampo('mod-reason', !motivoOk, 'El motivo debe tener entre 5 y 255 caracteres sin símbolos especiales.');
     if (!motivoOk) return { valido: false, mensaje: 'El motivo debe tener entre 5 y 255 caracteres sin símbolos especiales.' };
 
     return { valido: true, mensaje: '' };
 }
 
-function validarCancelarCita({ citaId }) {
+function validarCancelarCita({ citaId }, { appointments = [] } = {}) {
     const citaOk = esEnteroPositivo(citaId) && appointments.some(c => c.id === Number(citaId));
-    marcarErrorCampo('cancel-select-cita', !citaOk);
+    marcarErrorCampo('cancel-select-cita', !citaOk, 'Selecciona una cita activa válida para cancelar.');
     if (!citaOk) return { valido: false, mensaje: 'Selecciona una cita activa válida para cancelar.' };
 
     return { valido: true, mensaje: '' };

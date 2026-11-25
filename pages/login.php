@@ -280,6 +280,11 @@ $captchaImg = generarCaptcha();
                 console.error('Error al actualizar CAPTCHA', e);
             }
         });
+        Validacion.activar(document.getElementById('f'), {
+            reglas: {
+                captcha: v => v.trim().length !== 5 ? 'Escribe los 5 caracteres del código.' : null
+            }
+        });
     </script>
 </body>
 

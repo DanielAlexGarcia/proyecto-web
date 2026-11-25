@@ -627,7 +627,8 @@ $jsonAttr = JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG | JSON_U
                                     <option value="">-- Selecciona persona --</option>
                                     <template x-for="per in personasSinPaciente" :key="per.id">
                                         <option :value="per.id"
-                                            x-text="`ID #${per.id} - ${per.nombre_completo} (${per.fecha_nacimiento})`"></option>
+                                            x-text="`ID #${per.id} - ${per.nombre_completo} (${per.fecha_nacimiento})`">
+                                        </option>
                                     </template>
                                 </select>
                             </div>
@@ -766,7 +767,8 @@ $jsonAttr = JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG | JSON_U
                                 <option value="">-- Selecciona paciente --</option>
                                 <template x-for="pac in pacientes" :key="pac.id_paciente">
                                     <option :value="pac.id_paciente"
-                                        x-text="`#${pac.id_paciente} - ${pac.nombre_completo} (Seguro: ${pac.num_seguro})`"></option>
+                                        x-text="`#${pac.id_paciente} - ${pac.nombre_completo} (Seguro: ${pac.num_seguro})`">
+                                    </option>
                                 </template>
                             </select>
                         </div>
@@ -776,7 +778,8 @@ $jsonAttr = JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG | JSON_U
                                 <template x-for="emp in empleados" :key="emp.id_persona">
                                     <option :value="emp.id_persona"
                                         :selected="Number(emp.id_persona) === empleadoActualId"
-                                        x-text="`${emp.nombre_completo} — ${emp.cargo} (${emp.especializacion || 'Sin especialidad'})`"></option>
+                                        x-text="`${emp.nombre_completo} — ${emp.cargo} (${emp.especializacion || 'Sin especialidad'})`">
+                                    </option>
                                 </template>
                             </select>
                         </div>
@@ -935,7 +938,8 @@ $jsonAttr = JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG | JSON_U
                 <input type="hidden" name="accion" value="editar_paciente">
                 <input type="hidden" name="id_paciente" id="edit_id_paciente" x-model="editPac.id_paciente">
                 <div class="form-row">
-                    <div><label>Nombres</label><input type="text" name="nombres" id="edit_nombres" x-model="editPac.nombres" required></div>
+                    <div><label>Nombres</label><input type="text" name="nombres" id="edit_nombres"
+                            x-model="editPac.nombres" required></div>
                     <div><label>Primer Apellido</label><input type="text" name="primer_apellido"
                             id="edit_primer_apellido" x-model="editPac.primer_apellido" required></div>
                 </div>
@@ -954,10 +958,12 @@ $jsonAttr = JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG | JSON_U
                             <option value="Otro">Otro</option>
                         </select>
                     </div>
-                    <div><label>Dirección</label><input type="text" name="direccion" id="edit_direccion" x-model="editPac.direccion"></div>
+                    <div><label>Dirección</label><input type="text" name="direccion" id="edit_direccion"
+                            x-model="editPac.direccion"></div>
                 </div>
                 <div class="form-row">
-                    <div><label>Núm. Seguro</label><input type="text" name="num_seguro" id="edit_num_seguro" x-model="editPac.num_seguro" required>
+                    <div><label>Núm. Seguro</label><input type="text" name="num_seguro" id="edit_num_seguro"
+                            x-model="editPac.num_seguro" required>
                     </div>
                     <div>
                         <label>Grupo Sanguíneo</label>
@@ -969,7 +975,8 @@ $jsonAttr = JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG | JSON_U
                     </div>
                 </div>
                 <div class="form-row">
-                    <div><label>Alergias</label><input type="text" name="alergias" id="edit_alergias" x-model="editPac.alergias"></div>
+                    <div><label>Alergias</label><input type="text" name="alergias" id="edit_alergias"
+                            x-model="editPac.alergias"></div>
                 </div>
                 <button type="submit" class="btn">Guardar Cambios</button>
             </form>
@@ -1022,6 +1029,9 @@ $jsonAttr = JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG | JSON_U
 
     <script>
         function panelPersonal() {
+            init() {
+                this.$nextTick(() => document.querySelectorAll('form').forEach(f => Validacion.activar(f)));
+            },
             return {
                 activeTab: 'tab-pacientes',
                 empleadoActualId: <?= (int) $empleadoActual['id_persona'] ?>,
