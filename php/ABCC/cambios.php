@@ -78,6 +78,16 @@ if ($metodo === 'PUT') {
         if (strtolower($citaActual->getEstado()) === 'cancelada') {
             $cons->responder(409, ['error' => 'La cita ya está cancelada.']);
         }
+        if ($datos['estado'] === 'Cancelada') {
+            // Al cancelar no se puede alterar nada más de la cita
+            $datos['fechaHora'] = $citaActual->getFechaHora();
+            $datos['motivo'] = $citaActual->getMotivo();
+            $datos['doctorID'] = (int) $citaActual->getDoctorID();
+        } else {
+            $datos['fechaHora'] = ValidadorCitas::validarFechaHora($datos['fechaHora']);
+            $datos['motivo'] = ValidadorCitas::validarMotivo($datos['motivo']);
+            $datos['doctorID'] = ValidadorCitas::validarEnteroPositivo($datos['doctorID'], 'doctorID');
+        }
     }
     try {
         $exito = false;

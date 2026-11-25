@@ -84,9 +84,9 @@ if ($u['tipo'] === 'paciente') {
         $db->responder(403, ['ok' => false, 'error' => 'No tienes permisos para esta acción.']);
     }
     if ($tipo === 'cita') {
-    $datos['paciente_id'] = (int) $u['paciente_id']; // ignora lo que mande el cliente
-    $datos['estado']      = 'Pendiente';
-}
+        $datos['paciente_id'] = (int) $u['paciente_id']; // ignora lo que mande el cliente
+        $datos['estado'] = 'Pendiente';
+    }
 }
 
 try {
@@ -270,6 +270,8 @@ try {
             exigir($db, $datos, ['fecha_hora', 'motivo', 'paciente_id', 'doctor_id']);
             $datos['fecha_hora'] = ValidadorCitas::validarFechaHora($datos['fecha_hora']);
             $datos['motivo'] = ValidadorCitas::validarMotivo($datos['motivo']);
+            $datos['estado'] = ValidadorCitas::validarEstado($datos['estado'] ?? 'Pendiente');
+            $datos['doctor_id'] = ValidadorCitas::validarEnteroPositivo($datos['doctor_id'], 'doctor_id');
             $cita = new Cita(
                 $datos['fecha_hora'],            // formato: YYYY-MM-DD HH:MM:SS
                 $datos['motivo'],
