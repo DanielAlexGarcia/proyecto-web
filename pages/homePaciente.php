@@ -74,7 +74,13 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
     <script src="JS/popperValidacion.js"></script>
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
+        [x-cloak] {
+            display: none !important;
+        }
+
         body {
             background: #f8fafc;
             color: #1e293b;
@@ -116,13 +122,13 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
     </style>
 </head>
 
-<body class="min-h-screen flex flex-col antialiased">
+<body x-data="portalPaciente()" class="min-h-screen flex flex-col antialiased">
 
     <!-- ================= NAVEGACIÓN ================= -->
     <header class="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16 md:h-20">
-                <a href="#inicio" onclick="scrollToTop(event)" class="flex items-center gap-3">
+                <a href="#inicio" @click.prevent="scrollToTop()" class="flex items-center gap-3">
                     <div
                         class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0284c7] to-[#0d9488] flex items-center justify-center text-white font-bold text-xl">
                         +</div>
@@ -134,15 +140,15 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
                 </a>
 
                 <nav class="hidden lg:flex items-center gap-1.5" aria-label="Navegación principal">
-                    <a href="#inicio" onclick="scrollToTop(event)"
+                    <a href="#inicio" @click.prevent="scrollToTop()"
                         class="px-4 py-2.5 rounded-xl text-sm font-semibold text-[#0284c7] bg-sky-50 border border-sky-100">Inicio</a>
-                    <button type="button" onclick="openScheduleModal()"
+                    <button type="button" @click="openScheduleModal()"
                         class="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:text-[#0284c7] hover:bg-slate-50">Agendar
                         nueva cita</button>
-                    <button type="button" onclick="openModifyModal()"
+                    <button type="button" @click="openModifyModal()"
                         class="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:text-[#0284c7] hover:bg-slate-50">Modificar
                         cita</button>
-                    <button type="button" onclick="openCancelModal()"
+                    <button type="button" @click="openCancelModal()"
                         class="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:text-rose-600 hover:bg-rose-50/70">Cancelar
                         cita</button>
                 </nav>
@@ -164,23 +170,23 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
                     <a href="close.php"
                         class="hidden sm:inline-flex px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 border border-slate-200 hover:bg-slate-50">Cerrar
                         sesión</a>
-                    <button type="button" onclick="toggleMobileMenu()" aria-label="Abrir menú"
+                    <button type="button" @click="mobileMenuOpen = !mobileMenuOpen" aria-label="Abrir menú"
                         class="lg:hidden p-2.5 rounded-xl text-slate-600 hover:bg-slate-100">☰</button>
                 </div>
             </div>
         </div>
 
-        <div id="mobile-menu"
-            class="hidden lg:hidden bg-white border-t border-slate-100 px-4 pt-3 pb-5 space-y-1.5 shadow-lg">
-            <a href="#inicio" onclick="toggleMobileMenu(); scrollToTop(event);"
+        <div x-show="mobileMenuOpen" x-cloak
+            class="lg:hidden bg-white border-t border-slate-100 px-4 pt-3 pb-5 space-y-1.5 shadow-lg">
+            <a href="#inicio" @click.prevent="mobileMenuOpen = false; scrollToTop();"
                 class="block px-4 py-3 rounded-xl text-sm font-semibold text-[#0284c7] bg-sky-50">Inicio</a>
-            <button type="button" onclick="toggleMobileMenu(); openScheduleModal();"
+            <button type="button" @click="mobileMenuOpen = false; openScheduleModal();"
                 class="w-full px-4 py-3 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 text-left">Agendar
                 nueva cita</button>
-            <button type="button" onclick="toggleMobileMenu(); openModifyModal();"
+            <button type="button" @click="mobileMenuOpen = false; openModifyModal();"
                 class="w-full px-4 py-3 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 text-left">Modificar
                 cita</button>
-            <button type="button" onclick="toggleMobileMenu(); openCancelModal();"
+            <button type="button" @click="mobileMenuOpen = false; openCancelModal();"
                 class="w-full px-4 py-3 rounded-xl text-sm font-medium text-rose-600 hover:bg-rose-50 text-left">Cancelar
                 cita</button>
             <a href="close.php"
@@ -204,7 +210,7 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
                     <div class="space-y-2 max-w-2xl">
                         <div
                             class="inline-flex px-3 py-1 rounded-full bg-sky-50 border border-sky-100 text-[#0284c7] text-xs font-medium">
-                            <span id="current-date-display">Cargando fecha...</span>
+                            <span x-text="currentDateDisplay">Cargando fecha...</span>
                         </div>
                         <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight">
                             Bienvenido de nuevo, <span
@@ -213,12 +219,35 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
                         <p class="text-slate-600 text-sm sm:text-base">Gestiona tus consultas médicas y mantén el
                             control de tus próximas citas.</p>
                     </div>
-                    <button type="button" onclick="openScheduleModal()"
+                    <button type="button" @click="openScheduleModal()"
                         class="inline-flex items-center justify-center px-6 py-3.5 rounded-2xl bg-[#0284c7] hover:bg-[#0369a1] text-white font-semibold text-sm shadow-md">
                         + Agendar nueva cita
                     </button>
                 </div>
-                <div id="nearest-appointment-spotlight" class="mt-7 pt-6 border-t border-slate-200/70"></div>
+
+                <!-- Consulta más cercana (actualización reactiva) -->
+                <div class="mt-7 pt-6 border-t border-slate-200/70">
+                    <template x-if="!nearestAppointment">
+                        <p class="text-sm text-slate-500">No tienes consultas próximas registradas.</p>
+                    </template>
+                    <template x-if="nearestAppointment">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/80 rounded-2xl p-4 border border-sky-100">
+                            <div class="flex items-center gap-3.5">
+                                <div class="w-12 h-12 rounded-xl bg-sky-100 text-[#0284c7] flex items-center justify-center font-bold text-xs text-center px-1 shrink-0"
+                                     x-text="getDaysRemainingLabel(nearestAppointment.fecha_hora)"></div>
+                                <div>
+                                    <p class="text-[11px] font-semibold uppercase tracking-wider text-[#0d9488]">Tu consulta más cercana</p>
+                                    <p class="text-sm font-bold text-slate-900"
+                                       x-text="`${nearestAppointment.especialidad} — Dr(a). ${nearestAppointment.nombre_doctor}`"></p>
+                                    <p class="text-xs text-slate-600 capitalize"
+                                       x-text="`${formatDateSpanish(nearestAppointment.fecha_hora)} a las ${formatTime12h(nearestAppointment.fecha_hora)}`"></p>
+                                </div>
+                            </div>
+                            <button type="button" @click="openModifyModal(nearestAppointment.id)"
+                                class="text-xs font-semibold text-[#0284c7] hover:underline self-start sm:self-center">Cambiar horario →</button>
+                        </div>
+                    </template>
+                </div>
             </div>
         </section>
 
@@ -227,19 +256,61 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div class="flex items-center gap-3">
                         <h2 class="text-xl sm:text-2xl font-bold text-slate-900">Próximas Citas</h2>
-                        <span id="appointments-count-badge"
+                        <span x-text="filteredAppointments.length"
                             class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-100 text-[#0284c7]"><?= count($citasPaciente) ?></span>
                     </div>
                     <div class="inline-flex p-1 rounded-xl bg-white border border-slate-200/90 shadow-sm self-start">
-                        <button type="button" onclick="setStatusFilter('Todas')" id="filter-Todas"
-                            class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#0284c7] text-white">Todas</button>
-                        <button type="button" onclick="setStatusFilter('Pendiente')" id="filter-Pendiente"
-                            class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600">Pendientes</button>
-                        <button type="button" onclick="setStatusFilter('Confirmada')" id="filter-Confirmada"
-                            class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600">Confirmadas</button>
+                        <button type="button" @click="currentStatusFilter = 'Todas'"
+                            :class="currentStatusFilter === 'Todas' ? 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#0284c7] text-white' : 'px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900'">Todas</button>
+                        <button type="button" @click="currentStatusFilter = 'Pendiente'"
+                            :class="currentStatusFilter === 'Pendiente' ? 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#0284c7] text-white' : 'px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900'">Pendientes</button>
+                        <button type="button" @click="currentStatusFilter = 'Confirmada'"
+                            :class="currentStatusFilter === 'Confirmada' ? 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#0284c7] text-white' : 'px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900'">Confirmadas</button>
                     </div>
                 </div>
-                <div id="appointments-list" class="space-y-4"></div>
+
+                <!-- Lista de citas (actualización reactiva) -->
+                <div class="space-y-4">
+                    <template x-if="filteredAppointments.length === 0">
+                        <div class="bg-white rounded-2xl border border-dashed border-slate-300 p-10 text-center space-y-3">
+                            <p class="text-base font-bold text-slate-800">No tienes citas en esta categoría</p>
+                            <button type="button" @click="openScheduleModal()"
+                                class="px-5 py-2.5 rounded-xl bg-[#0284c7] text-white text-sm font-semibold hover:bg-[#0369a1]">+ Agendar nueva cita</button>
+                        </div>
+                    </template>
+
+                    <template x-for="c in filteredAppointments" :key="c.id">
+                        <article class="bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md hover:border-sky-200 transition-all p-5 sm:p-6">
+                            <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                                <div class="space-y-2.5">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold border"
+                                            :class="c.estado.toLowerCase() === 'confirmada' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-sky-50 text-[#0284c7] border-sky-200'"
+                                            x-text="c.estado"></span>
+                                        <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200/70"
+                                            x-text="getDaysRemainingLabel(c.fecha_hora)"></span>
+                                        <span class="text-xs text-slate-400 font-medium" x-text="`Cita #${c.id}`"></span>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-bold text-slate-900" x-text="c.especialidad"></h3>
+                                        <p class="text-sm font-medium text-slate-700" x-text="`Dr(a). ${c.nombre_doctor}`"></p>
+                                    </div>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-600">
+                                        <div><span class="font-semibold text-slate-800">Fecha:</span> <span class="capitalize" x-text="formatDateSpanish(c.fecha_hora)"></span></div>
+                                        <div><span class="font-semibold text-slate-800">Hora:</span> <span x-text="formatTime12h(c.fecha_hora)"></span></div>
+                                        <div class="sm:col-span-2"><span class="font-semibold text-slate-800">Motivo:</span> <span x-text="c.motivo"></span></div>
+                                    </div>
+                                </div>
+                                <div class="flex sm:flex-col gap-2 shrink-0">
+                                    <button type="button" @click="openModifyModal(c.id)"
+                                        class="flex-1 px-3.5 py-2 rounded-xl text-xs font-semibold text-[#0284c7] bg-sky-50 hover:bg-sky-100">Reprogramar</button>
+                                    <button type="button" @click="openCancelModal(c.id)"
+                                        class="flex-1 px-3.5 py-2 rounded-xl text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100">Cancelar</button>
+                                </div>
+                            </div>
+                        </article>
+                    </template>
+                </div>
             </section>
 
             <aside class="lg:col-span-4 space-y-6">
@@ -272,8 +343,8 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
 
     <!-- ================= MODALES ================= -->
     <!-- AGENDAR: POST ../php/ABCC/altas.php -->
-    <div id="modal-schedule"
-        class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+    <div id="modal-schedule" x-show="modals.schedule" x-cloak
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
         <div
             class="bg-white rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden animate-modal max-h-[92vh] flex flex-col">
             <div
@@ -282,38 +353,49 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
                     <h3 class="text-lg font-bold">Agendar Nueva Cita</h3>
                     <p class="text-xs text-sky-100">Selecciona especialista, fecha y motivo</p>
                 </div>
-                <button type="button" onclick="closeModal('modal-schedule')"
+                <button type="button" @click="closeModal('schedule')"
                     class="p-2 rounded-xl hover:bg-white/15">✕</button>
             </div>
-            <form id="form-schedule" onsubmit="handleScheduleSubmit(event)" class="p-6 space-y-4 overflow-y-auto">
+            <form id="form-schedule" @submit.prevent="handleScheduleSubmit($event)" class="p-6 space-y-4 overflow-y-auto">
                 <div>
                     <label for="sched-doctor"
                         class="block text-xs font-semibold text-slate-700 uppercase mb-1.5">Médico</label>
-                    <select id="sched-doctor" required
-                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm"></select>
+                    <select id="sched-doctor" x-model="schedForm.doctor_id" required
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm">
+                        <template x-if="doctorsList.length === 0">
+                            <option value="">No hay médicos disponibles</option>
+                        </template>
+                        <template x-for="d in doctorsList" :key="d.doctor_id">
+                            <option :value="d.doctor_id" x-text="`Dr(a). ${d.nombre_doctor} — ${d.especialidad}`"></option>
+                        </template>
+                    </select>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label for="sched-date"
                             class="block text-xs font-semibold text-slate-700 uppercase mb-1.5">Fecha</label>
-                        <input type="date" id="sched-date" required
+                        <input type="date" id="sched-date" x-model="schedForm.date" :min="schedForm.minDate" required
                             class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm">
                     </div>
                     <div>
                         <label for="sched-time"
                             class="block text-xs font-semibold text-slate-700 uppercase mb-1.5">Horario</label>
-                        <select id="sched-time" required
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm"></select>
+                        <select id="sched-time" x-model="schedForm.time" required
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm">
+                            <template x-for="[val, label] in HORARIOS" :key="val">
+                                <option :value="val" x-text="label"></option>
+                            </template>
+                        </select>
                     </div>
                 </div>
                 <div>
                     <label for="sched-reason" class="block text-xs font-semibold text-slate-700 uppercase mb-1.5">Motivo
                         de consulta</label>
-                    <input type="text" id="sched-reason" required placeholder="Ej. Revisión general"
+                    <input type="text" id="sched-reason" x-model="schedForm.reason" required placeholder="Ej. Revisión general"
                         class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm">
                 </div>
                 <div class="pt-3 flex justify-end gap-2 border-t border-slate-100">
-                    <button type="button" onclick="closeModal('modal-schedule')"
+                    <button type="button" @click="closeModal('schedule')"
                         class="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100">Cancelar</button>
                     <button type="submit"
                         class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-[#0284c7] hover:bg-[#0369a1] text-white">Confirmar
@@ -324,8 +406,8 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
     </div>
 
     <!-- MODIFICAR: PUT ../php/ABCC/cambios.php -->
-    <div id="modal-modify"
-        class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+    <div id="modal-modify" x-show="modals.modify" x-cloak
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
         <div
             class="bg-white rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden animate-modal max-h-[92vh] flex flex-col">
             <div class="px-6 py-5 bg-sky-700 text-white flex items-center justify-between">
@@ -333,44 +415,57 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
                     <h3 class="text-lg font-bold">Modificar Cita</h3>
                     <p class="text-xs text-sky-100">Actualiza especialista, fecha, hora o motivo</p>
                 </div>
-                <button type="button" onclick="closeModal('modal-modify')"
+                <button type="button" @click="closeModal('modify')"
                     class="p-2 rounded-xl hover:bg-white/15">✕</button>
             </div>
-            <form onsubmit="handleModifySubmit(event)" class="p-6 space-y-4 overflow-y-auto">
+            <form @submit.prevent="handleModifySubmit()" class="p-6 space-y-4 overflow-y-auto">
                 <div>
                     <label for="mod-select-cita"
                         class="block text-xs font-semibold text-slate-700 uppercase mb-1.5">Selecciona la cita</label>
-                    <select id="mod-select-cita" onchange="fillModifyFields()" required
-                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm"></select>
+                    <select id="mod-select-cita" x-model="modForm.id" @change="fillModifyFields()" required
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm">
+                        <template x-for="c in appointments" :key="c.id">
+                            <option :value="c.id"
+                                x-text="`#${c.id} — ${c.especialidad} (${splitFechaHora(c.fecha_hora).datePart} ${formatTime12h(c.fecha_hora)})`"></option>
+                        </template>
+                    </select>
                 </div>
                 <div>
                     <label for="mod-doctor"
                         class="block text-xs font-semibold text-slate-700 uppercase mb-1.5">Médico</label>
-                    <select id="mod-doctor" required
-                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm"></select>
+                    <select id="mod-doctor" x-model="modForm.doctor_id" required
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm">
+                        <template x-for="d in doctorsList" :key="d.doctor_id">
+                            <option :value="d.doctor_id" x-text="`Dr(a). ${d.nombre_doctor} — ${d.especialidad}`"></option>
+                        </template>
+                    </select>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label for="mod-date" class="block text-xs font-semibold text-slate-700 uppercase mb-1.5">Nueva
                             fecha</label>
-                        <input type="date" id="mod-date" required
+                        <input type="date" id="mod-date" x-model="modForm.date" required
                             class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm">
                     </div>
                     <div>
                         <label for="mod-time" class="block text-xs font-semibold text-slate-700 uppercase mb-1.5">Nuevo
                             horario</label>
-                        <select id="mod-time" required
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm"></select>
+                        <select id="mod-time" x-model="modForm.time" required
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm">
+                            <template x-for="[val, label] in HORARIOS" :key="val">
+                                <option :value="val" x-text="label"></option>
+                            </template>
+                        </select>
                     </div>
                 </div>
                 <div>
                     <label for="mod-reason"
                         class="block text-xs font-semibold text-slate-700 uppercase mb-1.5">Motivo</label>
-                    <input type="text" id="mod-reason" required
+                    <input type="text" id="mod-reason" x-model="modForm.reason" required
                         class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm">
                 </div>
                 <div class="pt-3 flex justify-end gap-2 border-t border-slate-100">
-                    <button type="button" onclick="closeModal('modal-modify')"
+                    <button type="button" @click="closeModal('modify')"
                         class="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100">Cerrar</button>
                     <button type="submit"
                         class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-[#0284c7] hover:bg-[#0369a1] text-white">Guardar
@@ -380,27 +475,32 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
         </div>
     </div>
 
-    <!-- CANCELAR: PATCH ../php/ABCC/cambiosParciales.php -->
-    <div id="modal-cancel"
-        class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+    <!-- CANCELAR: PUT ../php/ABCC/cambios.php -->
+    <div id="modal-cancel" x-show="modals.cancel" x-cloak
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
         <div class="bg-white rounded-3xl max-w-md w-full shadow-2xl overflow-hidden animate-modal">
             <div class="px-6 py-5 bg-rose-600 text-white flex items-center justify-between">
                 <div>
                     <h3 class="text-lg font-bold">Cancelar Cita</h3>
                     <p class="text-xs text-rose-100">La cita cambiará a estado Cancelada</p>
                 </div>
-                <button type="button" onclick="closeModal('modal-cancel')"
+                <button type="button" @click="closeModal('cancel')"
                     class="p-2 rounded-xl hover:bg-white/15">✕</button>
             </div>
-            <form onsubmit="handleCancelSubmit(event)" class="p-6 space-y-4">
+            <form @submit.prevent="handleCancelSubmit()" class="p-6 space-y-4">
                 <div>
                     <label for="cancel-select-cita"
                         class="block text-xs font-semibold text-slate-700 uppercase mb-1.5">Cita a cancelar</label>
-                    <select id="cancel-select-cita" required
-                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm"></select>
+                    <select id="cancel-select-cita" x-model="cancelForm.id" required
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm">
+                        <template x-for="c in appointments" :key="c.id">
+                            <option :value="c.id"
+                                x-text="`#${c.id} — ${c.especialidad} con Dr(a). ${c.nombre_doctor} (${splitFechaHora(c.fecha_hora).datePart})`"></option>
+                        </template>
+                    </select>
                 </div>
                 <div class="pt-3 flex justify-end gap-2 border-t border-slate-100">
-                    <button type="button" onclick="closeModal('modal-cancel')"
+                    <button type="button" @click="closeModal('cancel')"
                         class="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100">Conservar</button>
                     <button type="submit"
                         class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-rose-600 hover:bg-rose-700 text-white">Confirmar
@@ -410,331 +510,280 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
         </div>
     </div>
 
-    <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 max-w-sm w-full pointer-events-none"></div>
+    <!-- TOASTS -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 max-w-sm w-full pointer-events-none">
+        <template x-for="t in toasts" :key="t.id">
+            <div class="pointer-events-auto p-4 rounded-2xl border-l-4 shadow-xl text-xs font-medium text-white animate-toast"
+                :class="{
+                    'bg-slate-900 border-emerald-500': t.type === 'success',
+                    'bg-rose-950 border-rose-500': t.type === 'error',
+                    'bg-sky-950 border-sky-400': t.type === 'info'
+                }"
+                x-text="t.message"></div>
+        </template>
+    </div>
 
     <!-- ================= JAVASCRIPT ================= -->
     <script src="JS/validacionPaciente.js"></script>
     <script>
         const PACIENTE_ID = <?= (int) $pacienteId ?>;
         const NOMBRE_PACIENTE = <?= json_encode($nombrePaciente, JSON_UNESCAPED_UNICODE) ?>;
-        let appointments = <?= json_encode($citasPaciente, $jsonFlags) ?>;
-        const doctorsList = <?= json_encode($listaDoctores, $jsonFlags) ?>;
 
-        // Rutas relativas a /pages/
-        const API_URLS = {
-            altas: 'php/ABCC/altas.php',
-            cambios: 'php/ABCC/cambios.php',
-            cambiosParciales: 'php/ABCC/cambiosParciales.php',
-            bajas: 'php/ABCC/bajas.php'
-        };
+        function portalPaciente() {
+            return {
+                appointments: <?= json_encode($citasPaciente, $jsonFlags) ?>,
+                doctorsList: <?= json_encode($listaDoctores, $jsonFlags) ?>,
 
-        const HORARIOS = [
-            ['08:30:00', '08:30 AM'], ['09:30:00', '09:30 AM'], ['10:30:00', '10:30 AM'], ['11:30:00', '11:30 AM'],
-            ['13:00:00', '01:00 PM'], ['16:00:00', '04:00 PM'], ['17:30:00', '05:30 PM']
-        ];
+                API_URLS: {
+                    altas: 'php/ABCC/altas.php',
+                    cambios: 'php/ABCC/cambios.php',
+                    cambiosParciales: 'php/ABCC/cambiosParciales.php',
+                    bajas: 'php/ABCC/bajas.php'
+                },
 
-        let currentStatusFilter = 'Todas';
+                HORARIOS: [
+                    ['08:30:00', '08:30 AM'], ['09:30:00', '09:30 AM'], ['10:30:00', '10:30 AM'], ['11:30:00', '11:30 AM'],
+                    ['13:00:00', '01:00 PM'], ['16:00:00', '04:00 PM'], ['17:30:00', '05:30 PM']
+                ],
 
-        // ---------- Utilidades ----------
-        const escapeHTML = s => String(s ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+                currentStatusFilter: 'Todas',
+                currentDateDisplay: '',
+                mobileMenuOpen: false,
+                modals: { schedule: false, modify: false, cancel: false },
+                toasts: [],
 
-        function splitFechaHora(fh) {
-            const [datePart = '', timePart = '00:00:00'] = String(fh).split(' ');
-            return { datePart, timePart };
-        }
-        function formatDateSpanish(fh) {
-            const { datePart } = splitFechaHora(fh);
-            if (!datePart) return '';
-            const [y, m, d] = datePart.split('-').map(Number);
-            return new Date(y, m - 1, d).toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-        }
-        function formatTime12h(fh) {
-            const [h = 0, m = 0] = splitFechaHora(fh).timePart.split(':').map(Number);
-            return `${String(h % 12 || 12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
-        }
-        function getDaysRemainingLabel(fh) {
-            const { datePart } = splitFechaHora(fh);
-            if (!datePart) return 'Programada';
-            const today = new Date(); today.setHours(0, 0, 0, 0);
-            const [y, m, d] = datePart.split('-').map(Number);
-            const diff = Math.round((new Date(y, m - 1, d) - today) / 86400000);
-            if (diff < 0) return 'Pasada';
-            if (diff === 0) return 'Hoy';
-            if (diff === 1) return 'Mañana';
-            return `En ${diff} días`;
-        }
-        function localISODate(offsetDays = 0) {
-            const t = new Date(); t.setDate(t.getDate() + offsetDays);
-            return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
-        }
+                schedForm: { doctor_id: '', date: '', minDate: '', time: '08:30:00', reason: '' },
+                modForm: { id: '', doctor_id: '', date: '', time: '08:30:00', reason: '' },
+                cancelForm: { id: '' },
 
-        // ---------- Llamada genérica a los endpoints ABCC ----------
-        async function llamarAPI(url, method, payload) {
-            const res = await fetch(url, {
-                method,
-                credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            // Token expirado o ausente: volver al login
-            if (res.status === 401) {
-                window.location.href = 'login';
-                return { ok: false, data: { error: 'Sesión expirada.' } };
-            }
-
-            const texto = await res.text();
-            let data;
-            try { data = JSON.parse(texto); }
-            catch (_) {
-                console.error('Respuesta no JSON de', url, texto);
-                data = { error: `Respuesta no válida del servidor (HTTP ${res.status}).` };
-            }
-            return { ok: res.ok && !data.error && data.ok !== false, data };
-        }
-
-        // ---------- Render ----------
-        function renderAppointments() {
-            appointments.sort((a, b) => a.fecha_hora.localeCompare(b.fecha_hora));
-            const container = document.getElementById('appointments-list');
-            const filtered = currentStatusFilter === 'Todas'
-                ? appointments
-                : appointments.filter(c => c.estado.toLowerCase() === currentStatusFilter.toLowerCase());
-
-            document.getElementById('appointments-count-badge').textContent = filtered.length;
-
-            if (filtered.length === 0) {
-                container.innerHTML = `
-                <div class="bg-white rounded-2xl border border-dashed border-slate-300 p-10 text-center space-y-3">
-                    <p class="text-base font-bold text-slate-800">No tienes citas en esta categoría</p>
-                    <button type="button" onclick="openScheduleModal()" class="px-5 py-2.5 rounded-xl bg-[#0284c7] text-white text-sm font-semibold hover:bg-[#0369a1]">+ Agendar nueva cita</button>
-                </div>`;
-                renderNearestSpotlight();
-                return;
-            }
-
-            container.innerHTML = filtered.map(c => {
-                const conf = c.estado.toLowerCase() === 'confirmada';
-                const style = conf ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-sky-50 text-[#0284c7] border-sky-200';
-                return `
-            <article class="bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md hover:border-sky-200 transition-all p-5 sm:p-6">
-                <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                    <div class="space-y-2.5">
-                        <div class="flex flex-wrap items-center gap-2">
-                            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold border ${style}">${escapeHTML(c.estado)}</span>
-                            <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200/70">${getDaysRemainingLabel(c.fecha_hora)}</span>
-                            <span class="text-xs text-slate-400 font-medium">Cita #${c.id}</span>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-bold text-slate-900">${escapeHTML(c.especialidad)}</h3>
-                            <p class="text-sm font-medium text-slate-700">Dr(a). ${escapeHTML(c.nombre_doctor)}</p>
-                        </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-600">
-                            <div><span class="font-semibold text-slate-800">Fecha:</span> <span class="capitalize">${formatDateSpanish(c.fecha_hora)}</span></div>
-                            <div><span class="font-semibold text-slate-800">Hora:</span> ${formatTime12h(c.fecha_hora)}</div>
-                            <div class="sm:col-span-2"><span class="font-semibold text-slate-800">Motivo:</span> ${escapeHTML(c.motivo)}</div>
-                        </div>
-                    </div>
-                    <div class="flex sm:flex-col gap-2 shrink-0">
-                        <button type="button" onclick="openModifyModal(${c.id})" class="flex-1 px-3.5 py-2 rounded-xl text-xs font-semibold text-[#0284c7] bg-sky-50 hover:bg-sky-100">Reprogramar</button>
-                        <button type="button" onclick="openCancelModal(${c.id})" class="flex-1 px-3.5 py-2 rounded-xl text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100">Cancelar</button>
-                    </div>
-                </div>
-            </article>`;
-            }).join('');
-
-            renderNearestSpotlight();
-        }
-
-        function renderNearestSpotlight() {
-            const el = document.getElementById('nearest-appointment-spotlight');
-            if (appointments.length === 0) {
-                el.innerHTML = `<p class="text-sm text-slate-500">No tienes consultas próximas registradas.</p>`;
-                return;
-            }
-            const n = appointments[0];
-            el.innerHTML = `
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/80 rounded-2xl p-4 border border-sky-100">
-                <div class="flex items-center gap-3.5">
-                    <div class="w-12 h-12 rounded-xl bg-sky-100 text-[#0284c7] flex items-center justify-center font-bold text-xs text-center px-1 shrink-0">${getDaysRemainingLabel(n.fecha_hora)}</div>
-                    <div>
-                        <p class="text-[11px] font-semibold uppercase tracking-wider text-[#0d9488]">Tu consulta más cercana</p>
-                        <p class="text-sm font-bold text-slate-900">${escapeHTML(n.especialidad)} — Dr(a). ${escapeHTML(n.nombre_doctor)}</p>
-                        <p class="text-xs text-slate-600 capitalize">${formatDateSpanish(n.fecha_hora)} a las ${formatTime12h(n.fecha_hora)}</p>
-                    </div>
-                </div>
-                <button type="button" onclick="openModifyModal(${n.id})" class="text-xs font-semibold text-[#0284c7] hover:underline self-start sm:self-center">Cambiar horario →</button>
-            </div>`;
-        }
-
-        function populateSelects() {
-            const docs = doctorsList.length
-                ? doctorsList.map(d => `<option value="${d.doctor_id}">Dr(a). ${escapeHTML(d.nombre_doctor)} — ${escapeHTML(d.especialidad)}</option>`).join('')
-                : '<option value="">No hay médicos disponibles</option>';
-            const horas = HORARIOS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
-            ['sched-doctor', 'mod-doctor'].forEach(id => document.getElementById(id).innerHTML = docs);
-            ['sched-time', 'mod-time'].forEach(id => document.getElementById(id).innerHTML = horas);
-        }
-
-        // ---------- AGENDAR (POST altas.php) ----------
-        function openScheduleModal() {
-            const f = document.getElementById('sched-date');
-            f.min = f.value = localISODate(1);
-            document.getElementById('modal-schedule').classList.replace('hidden', 'flex');
-        }
-
-        async function handleScheduleSubmit(e) {
-            e.preventDefault();
-            const doctorId = Number(document.getElementById('sched-doctor').value);
-            const reason = document.getElementById('sched-reason').value.trim();
-            const fechaHora = `${document.getElementById('sched-date').value} ${document.getElementById('sched-time').value}`;
-            if (!doctorId) return showToast('Selecciona un médico.', 'error');
-
-            try {
-                const { ok, data } = await llamarAPI(API_URLS.altas, 'POST', {
-                    tipo: 'cita', fecha_hora: fechaHora, motivo: reason, estado: 'Pendiente',
-                    paciente_id: PACIENTE_ID, doctor_id: doctorId
-                });
-                if (ok) {
-                    const d = doctorsList.find(x => x.doctor_id === doctorId);
-                    appointments.push({
-                        id: Number(data.idCita), fecha_hora: fechaHora, motivo: reason, estado: 'Pendiente',
-                        paciente_id: PACIENTE_ID, doctor_id: doctorId,
-                        nombre_doctor: d ? d.nombre_doctor : 'Especialista',
-                        especialidad: d ? d.especialidad : 'Consulta Médica'
+                init() {
+                    this.currentDateDisplay = new Date().toLocaleDateString('es-MX', {
+                        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
                     });
-                    renderAppointments();
-                    closeModal('modal-schedule');
-                    e.target.reset();
-                    showToast(data.mensaje || 'Cita registrada correctamente.', 'success');
-                } else {
-                    showToast(data.error || 'No se pudo registrar la cita.', 'error');
-                }
-            } catch (err) {
-                showToast('Error de conexión con altas.php', 'error');
-            }
-        }
+                    this.sortAppointments();
+                    if (this.doctorsList.length) {
+                        this.schedForm.doctor_id = String(this.doctorsList[0].doctor_id);
+                    }
+                },
 
-        // ---------- MODIFICAR (PUT cambios.php) ----------
-        function openModifyModal(preselectedId = null) {
-            if (appointments.length === 0) return showToast('No tienes citas activas para modificar.', 'info');
-            document.getElementById('mod-select-cita').innerHTML = appointments.map(c =>
-                `<option value="${c.id}" ${c.id === preselectedId ? 'selected' : ''}>#${c.id} — ${escapeHTML(c.especialidad)} (${splitFechaHora(c.fecha_hora).datePart} ${formatTime12h(c.fecha_hora)})</option>`
-            ).join('');
-            fillModifyFields();
-            document.getElementById('modal-modify').classList.replace('hidden', 'flex');
-        }
+                // ---------- Propiedades computadas ----------
+                get filteredAppointments() {
+                    if (this.currentStatusFilter === 'Todas') return this.appointments;
+                    return this.appointments.filter(
+                        c => c.estado.toLowerCase() === this.currentStatusFilter.toLowerCase()
+                    );
+                },
 
-        function fillModifyFields() {
-            const cita = appointments.find(c => c.id === Number(document.getElementById('mod-select-cita').value));
-            if (!cita) return;
-            const { datePart, timePart } = splitFechaHora(cita.fecha_hora);
-            document.getElementById('mod-doctor').value = cita.doctor_id;
-            document.getElementById('mod-date').value = datePart;
-            document.getElementById('mod-time').value = timePart;
-            document.getElementById('mod-reason').value = cita.motivo;
-        }
+                get nearestAppointment() {
+                    return this.appointments.length > 0 ? this.appointments[0] : null;
+                },
 
-        async function handleModifySubmit(e) {
-            e.preventDefault();
-            const id = Number(document.getElementById('mod-select-cita').value);
-            const orig = appointments.find(c => c.id === id);
-            if (!orig) return;
+                sortAppointments() {
+                    this.appointments.sort((a, b) => a.fecha_hora.localeCompare(b.fecha_hora));
+                },
 
-            const doctorId = Number(document.getElementById('mod-doctor').value);
-            const fechaHora = `${document.getElementById('mod-date').value} ${document.getElementById('mod-time').value}`;
-            const motivo = document.getElementById('mod-reason').value.trim();
+                // ---------- Utilidades ----------
+                splitFechaHora(fh) {
+                    const [datePart = '', timePart = '00:00:00'] = String(fh).split(' ');
+                    return { datePart, timePart };
+                },
+                formatDateSpanish(fh) {
+                    const { datePart } = this.splitFechaHora(fh);
+                    if (!datePart) return '';
+                    const [y, m, d] = datePart.split('-').map(Number);
+                    return new Date(y, m - 1, d).toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                },
+                formatTime12h(fh) {
+                    const [h = 0, m = 0] = this.splitFechaHora(fh).timePart.split(':').map(Number);
+                    return `${String(h % 12 || 12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
+                },
+                getDaysRemainingLabel(fh) {
+                    const { datePart } = this.splitFechaHora(fh);
+                    if (!datePart) return 'Programada';
+                    const today = new Date(); today.setHours(0, 0, 0, 0);
+                    const [y, m, d] = datePart.split('-').map(Number);
+                    const diff = Math.round((new Date(y, m - 1, d) - today) / 86400000);
+                    if (diff < 0) return 'Pasada';
+                    if (diff === 0) return 'Hoy';
+                    if (diff === 1) return 'Mañana';
+                    return `En ${diff} días`;
+                },
+                localISODate(offsetDays = 0) {
+                    const t = new Date(); t.setDate(t.getDate() + offsetDays);
+                    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+                },
 
-            try {
-                const { ok, data } = await llamarAPI(API_URLS.cambios, 'PUT', {
-                    id, fechaHora, motivo, estado: orig.estado, pacienteID: PACIENTE_ID, doctorID: doctorId
-                });
-                if (ok) {
-                    const d = doctorsList.find(x => x.doctor_id === doctorId);
-                    Object.assign(orig, {
-                        fecha_hora: fechaHora, motivo, doctor_id: doctorId,
-                        nombre_doctor: d ? d.nombre_doctor : orig.nombre_doctor,
-                        especialidad: d ? d.especialidad : orig.especialidad
+                // ---------- Llamada genérica a los endpoints ABCC ----------
+                async llamarAPI(url, method, payload) {
+                    const res = await fetch(url, {
+                        method,
+                        credentials: 'same-origin',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
                     });
-                    renderAppointments();
-                    closeModal('modal-modify');
-                    showToast(data.mensaje || 'Cita actualizada correctamente.', 'success');
-                } else {
-                    showToast(data.error || 'No se pudo actualizar la cita.', 'error');
+
+                    if (res.status === 401) {
+                        window.location.href = 'login';
+                        return { ok: false, data: { error: 'Sesión expirada.' } };
+                    }
+
+                    const texto = await res.text();
+                    let data;
+                    try { data = JSON.parse(texto); }
+                    catch (_) {
+                        console.error('Respuesta no JSON de', url, texto);
+                        data = { error: `Respuesta no válida del servidor (HTTP ${res.status}).` };
+                    }
+                    return { ok: res.ok && !data.error && data.ok !== false, data };
+                },
+
+                // ---------- AGENDAR (POST altas.php) ----------
+                openScheduleModal() {
+                    const fechaMin = this.localISODate(1);
+                    this.schedForm = {
+                        doctor_id: this.doctorsList.length ? String(this.doctorsList[0].doctor_id) : '',
+                        date: fechaMin,
+                        minDate: fechaMin,
+                        time: this.HORARIOS[0][0],
+                        reason: ''
+                    };
+                    this.modals.schedule = true;
+                },
+
+                async handleScheduleSubmit(e) {
+                    const doctorId = Number(this.schedForm.doctor_id);
+                    const reason = this.schedForm.reason.trim();
+                    const fechaHora = `${this.schedForm.date} ${this.schedForm.time}`;
+                    if (!doctorId) return this.showToast('Selecciona un médico.', 'error');
+
+                    try {
+                        const { ok, data } = await this.llamarAPI(this.API_URLS.altas, 'POST', {
+                            tipo: 'cita', fecha_hora: fechaHora, motivo: reason, estado: 'Pendiente',
+                            paciente_id: PACIENTE_ID, doctor_id: doctorId
+                        });
+                        if (ok) {
+                            const d = this.doctorsList.find(x => x.doctor_id === doctorId);
+                            this.appointments.push({
+                                id: Number(data.idCita), fecha_hora: fechaHora, motivo: reason, estado: 'Pendiente',
+                                paciente_id: PACIENTE_ID, doctor_id: doctorId,
+                                nombre_doctor: d ? d.nombre_doctor : 'Especialista',
+                                especialidad: d ? d.especialidad : 'Consulta Médica'
+                            });
+                            this.sortAppointments();
+                            this.closeModal('schedule');
+                            if (e && e.target) e.target.reset();
+                            this.showToast(data.mensaje || 'Cita registrada correctamente.', 'success');
+                        } else {
+                            this.showToast(data.error || 'No se pudo registrar la cita.', 'error');
+                        }
+                    } catch (err) {
+                        this.showToast('Error de conexión con altas.php', 'error');
+                    }
+                },
+
+                // ---------- MODIFICAR (PUT cambios.php) ----------
+                openModifyModal(preselectedId = null) {
+                    if (this.appointments.length === 0) return this.showToast('No tienes citas activas para modificar.', 'info');
+                    const targetId = preselectedId ?? this.appointments[0].id;
+                    this.modForm.id = String(targetId);
+                    this.fillModifyFields();
+                    this.modals.modify = true;
+                },
+
+                fillModifyFields() {
+                    const cita = this.appointments.find(c => c.id === Number(this.modForm.id));
+                    if (!cita) return;
+                    const { datePart, timePart } = this.splitFechaHora(cita.fecha_hora);
+                    this.modForm.doctor_id = String(cita.doctor_id);
+                    this.modForm.date = datePart;
+                    this.modForm.time = timePart;
+                    this.modForm.reason = cita.motivo;
+                },
+
+                async handleModifySubmit() {
+                    const id = Number(this.modForm.id);
+                    const orig = this.appointments.find(c => c.id === id);
+                    if (!orig) return;
+
+                    const doctorId = Number(this.modForm.doctor_id);
+                    const fechaHora = `${this.modForm.date} ${this.modForm.time}`;
+                    const motivo = this.modForm.reason.trim();
+
+                    try {
+                        const { ok, data } = await this.llamarAPI(this.API_URLS.cambios, 'PUT', {
+                            id, fechaHora, motivo, estado: orig.estado, pacienteID: PACIENTE_ID, doctorID: doctorId
+                        });
+                        if (ok) {
+                            const d = this.doctorsList.find(x => x.doctor_id === doctorId);
+                            Object.assign(orig, {
+                                fecha_hora: fechaHora, motivo, doctor_id: doctorId,
+                                nombre_doctor: d ? d.nombre_doctor : orig.nombre_doctor,
+                                especialidad: d ? d.especialidad : orig.especialidad
+                            });
+                            this.sortAppointments();
+                            this.closeModal('modify');
+                            this.showToast(data.mensaje || 'Cita actualizada correctamente.', 'success');
+                        } else {
+                            this.showToast(data.error || 'No se pudo actualizar la cita.', 'error');
+                        }
+                    } catch (err) {
+                        this.showToast('Error de conexión con cambios.php', 'error');
+                    }
+                },
+
+                // ---------- CANCELAR (PUT cambios.php) ----------
+                openCancelModal(preselectedId = null) {
+                    if (this.appointments.length === 0) return this.showToast('No tienes citas activas para cancelar.', 'info');
+                    this.cancelForm.id = String(preselectedId ?? this.appointments[0].id);
+                    this.modals.cancel = true;
+                },
+
+                async handleCancelSubmit() {
+                    const id = Number(this.cancelForm.id);
+                    try {
+                        const orig = this.appointments.find(c => c.id === id);
+                        const { ok, data } = await this.llamarAPI(this.API_URLS.cambios, 'PUT', {
+                            id,
+                            fechaHora: orig.fecha_hora,
+                            motivo: orig.motivo,
+                            estado: 'Cancelada',
+                            pacienteID: PACIENTE_ID,
+                            doctorID: orig.doctor_id
+                        });
+                        if (ok) {
+                            this.appointments = this.appointments.filter(c => c.id !== id);
+                            this.closeModal('cancel');
+                            this.showToast(data.mensaje || 'Cita cancelada correctamente.', 'success');
+                        } else {
+                            this.showToast(data.error || 'No se pudo cancelar la cita.', 'error');
+                        }
+                    } catch (err) {
+                        this.showToast('Error de conexión con el servidor.', 'error');
+                    }
+                },
+
+                // ---------- Interfaz ----------
+                closeModal(key) {
+                    const modalEl = document.getElementById(`modal-${key}`);
+                    if (modalEl && typeof Validacion !== 'undefined') {
+                        Validacion.limpiarTodos(modalEl);
+                    }
+                    this.modals[key] = false;
+                },
+
+                scrollToTop() {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                },
+
+                showToast(message, type = 'success') {
+                    const id = Date.now() + Math.random();
+                    this.toasts.push({ id, message, type });
+                    setTimeout(() => {
+                        this.toasts = this.toasts.filter(t => t.id !== id);
+                    }, 3500);
                 }
-            } catch (err) {
-                showToast('Error de conexión con cambios.php', 'error');
-            }
+            };
         }
-
-        // ---------- CANCELAR (PATCH cambiosParciales.php) ----------
-        function openCancelModal(preselectedId = null) {
-            if (appointments.length === 0) return showToast('No tienes citas activas para cancelar.', 'info');
-            document.getElementById('cancel-select-cita').innerHTML = appointments.map(c =>
-                `<option value="${c.id}" ${c.id === preselectedId ? 'selected' : ''}>#${c.id} — ${escapeHTML(c.especialidad)} con Dr(a). ${escapeHTML(c.nombre_doctor)} (${splitFechaHora(c.fecha_hora).datePart})</option>`
-            ).join('');
-            document.getElementById('modal-cancel').classList.replace('hidden', 'flex');
-        }
-
-        async function handleCancelSubmit(e) {
-            e.preventDefault();
-            const id = Number(document.getElementById('cancel-select-cita').value);
-            try {
-                const orig = appointments.find(c => c.id === id);
-                const { ok, data } = await llamarAPI(API_URLS.cambios, 'PUT', {
-                    id,
-                    fechaHora: orig.fecha_hora,
-                    motivo: orig.motivo,
-                    estado: 'Cancelada',
-                    pacienteID: PACIENTE_ID,
-                    doctorID: orig.doctor_id
-                });
-                if (ok) {
-                    appointments = appointments.filter(c => c.id !== id);
-                    renderAppointments();
-                    closeModal('modal-cancel');
-                    showToast(data.mensaje || 'Cita cancelada correctamente.', 'success');
-                } else {
-                    showToast(data.error || 'No se pudo cancelar la cita.', 'error');
-                }
-            } catch (err) {
-                showToast('Error de conexión con el servidor.', 'error');
-            }
-        }
-
-        // ---------- Interfaz ----------
-        function closeModal(id) {
-            Validacion.limpiarTodos(document.getElementById(id));
-            document.getElementById(id).classList.replace('flex', 'hidden');
-        }
-        function setStatusFilter(status) {
-            currentStatusFilter = status;
-            ['Todas', 'Pendiente', 'Confirmada'].forEach(tab => {
-                document.getElementById(`filter-${tab}`).className = tab === status
-                    ? 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#0284c7] text-white'
-                    : 'px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900';
-            });
-            renderAppointments();
-        }
-
-        function toggleMobileMenu() { document.getElementById('mobile-menu').classList.toggle('hidden'); }
-        function scrollToTop(e) { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
-
-        function showToast(message, type = 'success') {
-            const colors = { success: 'bg-slate-900 border-emerald-500', error: 'bg-rose-950 border-rose-500', info: 'bg-sky-950 border-sky-400' };
-            const t = document.createElement('div');
-            t.className = `pointer-events-auto p-4 rounded-2xl border-l-4 shadow-xl text-xs font-medium text-white animate-toast ${colors[type] || colors.success}`;
-            t.textContent = message;
-            document.getElementById('toast-container').appendChild(t);
-            setTimeout(() => t.remove(), 3500);
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('current-date-display').textContent =
-                new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-            populateSelects();
-            renderAppointments();
-        });
     </script>
 </body>
 
