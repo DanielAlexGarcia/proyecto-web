@@ -7,7 +7,7 @@ $u = requerirSesionPagina('personal', 'login');
 
 require_once __DIR__ . '/../php/baseDatos/conexionBaseDatos.php';
 require_once __DIR__ . '/../php/validacionesCita.php';
-require_once __DIR__ . '/../php/validacionesPersona.php';
+require_once __DIR__ . '/../php/validaciones/validacionesPersona.php';
 require_once __DIR__ . '/../php/modelosDAO/citaDAO.php';
 
 $pdo = (new conexionBaseDatos())->getConexion();

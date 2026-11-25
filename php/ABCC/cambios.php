@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../auth/autenticacion.php';
 require_once __DIR__ . '/../validacionesCita.php';
+require_once __DIR__ . '/../validaciones/validacionesPersona.php';
 $u = requerirSesionApi(['paciente', 'personal']); // o solo ['personal'] según el endpoint
 header('Content-Type: application/json; charset=utf-8');
 
@@ -38,6 +39,8 @@ if ($metodo === 'PUT') {
     // Identificar qué estructura coincide con las llaves recibidas en el JSON
     $tipoEntidad = null;
     $clavesRecibidas = array_keys($datos);
+    $claveId = [0 => 'id', 1 => 'personaID', 2 => 'personaID', 3 => 'id'][$tipoEntidad];
+ValidadorCitas::validarEnteroPositivo($datos[$claveId], $claveId);
 
     foreach ($estructuraDatos as $indice => $camposEsperados) {
         if (
@@ -107,7 +110,7 @@ if ($u['tipo'] === 'personal') {
         $datos['estado']    = ValidadorCitas::validarEstado($datos['estado']);
         $datos['doctorID']  = ValidadorCitas::validarEnteroPositivo($datos['doctorID'], 'doctorID');
     } else {
-        require_once __DIR__ . '/../validacionesPersona.php';
+
         try {
             switch ($tipoEntidad) {
                 case 0: ValidadorPersonas::persona([

@@ -1,5 +1,8 @@
 <?php
 require_once __DIR__ . '/../auth/autenticacion.php';
+require_once __DIR__ . '/../validacionesCita.php';
+require_once __DIR__ . '/../validaciones/validacionesPersona.php';
+ValidadorCitas::$lanzarExcepcion = true;
 $u = requerirCargoApi(['administrador']);
 header('Content-Type: application/json; charset=utf-8');
 
@@ -74,6 +77,11 @@ if ($metodo === 'PATCH') {
                 if (array_key_exists('Direccion', $datos)) {
                     $persona->setCURP($datos['Direccion']); // Mapeado a $Direccion en tu modelo
                 }
+                ValidadorPersonas::persona([
+    'nombres' => $persona->getNombres(), 'primer_apellido' => $persona->getPrimerApellido(),
+    'segundo_apellido' => $persona->getSegundoApellido(), 'fecha_nacimiento' => $persona->getFechaNacimiento(),
+    'genero' => $persona->getGenero(), 'direccion' => $persona->getCURP(),
+]);
 
                 $exito = $dao->actualizar($persona, $idActualizado);
                 break;
@@ -94,7 +102,10 @@ if ($metodo === 'PATCH') {
                 if (array_key_exists('salario', $datos)) {
                     $empleado->setSalario((float) $datos['salario']);
                 }
-
+ValidadorPersonas::empleado([
+    'cargo' => $empleado->getCargo(), 'especializacion' => $empleado->getEspecializacion(),
+    'salario' => $empleado->getSalario(),
+]);
                 $exito = $dao->actualizar($empleado);
                 break;
 
@@ -114,7 +125,10 @@ if ($metodo === 'PATCH') {
                 if (array_key_exists('alergias', $datos)) {
                     $paciente->setAlergias($datos['alergias']);
                 }
-
+ValidadorPersonas::paciente([
+    'num_seguro' => $paciente->getNumSeg(), 'grupo_sanguineo' => $paciente->getGrupSangineo(),
+    'alergias' => $paciente->getAlergias(),
+]);
                 $exito = $dao->actualizar($paciente);
                 break;
 
@@ -137,7 +151,9 @@ if ($metodo === 'PATCH') {
                 if (array_key_exists('doctorID', $datos)) {
                     $cita->setDoctorID((int) $datos['doctorID']);
                 }
-
+ValidadorCitas::validarFechaHora($cita->getFechaHora(), true, false);
+ValidadorCitas::validarEstado($cita->getEstado());
+ValidadorCitas::validarEnteroPositivo($cita->getDoctorID(), 'doctorID');
                 $exito = $dao->actualizar($cita, $idActualizado);
                 break;
         }
@@ -151,7 +167,9 @@ if ($metodo === 'PATCH') {
             $cons->responder(500, ['error' => "No se pudo aplicar el cambio parcial en $entidadNombre"]);
         }
 
-    } catch (PDOException $e) {
+    } catch (InvalidArgumentException $e) {
+    $cons->responder(422, ['error' => $e->getMessage()]);
+}catch (PDOException $e) {
         $cons->responder(500, [
             'error' => 'Error en la base de datos al realizar el cambio parcial',
             'detalle' => $e->getMessage()

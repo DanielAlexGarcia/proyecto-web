@@ -21,35 +21,35 @@ class ValidadorCitas
         return (int) $valor;
     }
 
-    public static function validarFechaHora(mixed $fechaHora, bool $permitirPasada = false): string
-    {
-        if (!is_string($fechaHora) || !preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $fechaHora)) {
-            self::responderError(422, 'El formato de fecha y hora debe ser YYYY-MM-DD HH:MM:SS.');
-        }
-
-        [$fecha, $hora] = explode(' ', $fechaHora);
-
-        $dt = DateTimeImmutable::createFromFormat('Y-m-d', $fecha);
-        if (!$dt || $dt->format('Y-m-d') !== $fecha) {
-            self::responderError(422, 'La fecha ingresada no es válida.');
-        }
-
-        if (!in_array($hora, self::HORARIOS_PERMITIDOS, true)) {
-            self::responderError(422, 'El horario seleccionado no es válido.');
-        }
-
-        if (!$permitirPasada) {
-            $dtCompleta = DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $fechaHora);
-            if ($dtCompleta <= new DateTimeImmutable('now')) {
-                self::responderError(422, 'La fecha y hora de la cita deben ser futuras.');
-            }
-        }
-        if ($exigirBloque && !in_array($hora, self::HORARIOS_PERMITIDOS, true)) {
-    self::responderError(422, 'El horario seleccionado no es válido.');
-}
-
-        return $fechaHora;
+    public static function validarFechaHora(
+    mixed $fechaHora,
+    bool $permitirPasada = false,
+    bool $exigirBloque = true
+): string {
+    if (!is_string($fechaHora) || !preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $fechaHora)) {
+        self::responderError(422, 'El formato de fecha y hora debe ser YYYY-MM-DD HH:MM:SS.');
     }
+
+    [$fecha, $hora] = explode(' ', $fechaHora);
+
+    $dt = DateTimeImmutable::createFromFormat('Y-m-d', $fecha);
+    if (!$dt || $dt->format('Y-m-d') !== $fecha) {
+        self::responderError(422, 'La fecha ingresada no es válida.');
+    }
+
+    if ($exigirBloque && !in_array($hora, self::HORARIOS_PERMITIDOS, true)) {
+        self::responderError(422, 'El horario seleccionado no es válido.');
+    }
+
+    if (!$permitirPasada) {
+        $dtCompleta = DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $fechaHora);
+        if (!$dtCompleta || $dtCompleta <= new DateTimeImmutable('now')) {
+            self::responderError(422, 'La fecha y hora de la cita deben ser futuras.');
+        }
+    }
+
+    return $fechaHora;
+}
 
     public static function validarMotivo(mixed $motivo): string
     {

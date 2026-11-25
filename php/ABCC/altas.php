@@ -21,7 +21,7 @@ require_once __DIR__ . '/../modelosDAO/personaDAO.php';
 require_once __DIR__ . '/../modelosDAO/pacienteDAO.php';
 require_once __DIR__ . '/../modelosDAO/empleadoDAO.php';
 require_once __DIR__ . '/../modelosDAO/citaDAO.php';
-require_once __DIR__ . '/../Validaciones/validacionesPersona.php';
+require_once __DIR__ . '/../validaciones/validacionesPersona.php';
 
 $u = requerirSesionApi(['paciente', 'personal']);
 
