@@ -1,12 +1,9 @@
 <?php
 require_once __DIR__ . '/jwt.php';
 
-// ⚠️ Define JWT_SECRET como variable de entorno (mínimo 32 caracteres aleatorios).
-// Genera uno con: php -r "echo bin2hex(random_bytes(32));"
-// El valor de respaldo es SOLO para desarrollo local.
 $__secret = getenv('JWT_SECRET');
-if (!$__secret && is_file(__DIR__ . '/../config/secretos.php')) {
-    $__cfg = require __DIR__ . '/../config/secretos.php';
+if (!$__secret && is_file(__DIR__ . '/../auth/secretos.php')) {
+    $__cfg = require __DIR__ . '/../auth/secretos.php';
     $__secret = $__cfg['JWT_SECRET'] ?? '';
 }
 if (!$__secret || strlen($__secret) < 32) {

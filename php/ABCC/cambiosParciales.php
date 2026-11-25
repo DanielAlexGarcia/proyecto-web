@@ -3,13 +3,12 @@ require_once __DIR__ . '/../auth/autenticacion.php';
 $u = requerirSesionApi(['personal']);
 header('Content-Type: application/json; charset=utf-8');
 
-include_once('/../baseDatos/conexionBaseDatos.php');
+include_once __DIR__ . '/../baseDatos/conexionBaseDatos.php';
 
-// Cargar automáticamente todos los modelos y DAOs
-foreach (glob('/../modelos/*.php') as $modelo) {
+foreach (glob(__DIR__ . '/../modelos/*.php') as $modelo) {
     require_once $modelo;
 }
-foreach (glob('/../modelosDAO/*.php') as $dao) {
+foreach (glob(__DIR__ . '/../modelosDAO/*.php') as $dao) {
     require_once $dao;
 }
 

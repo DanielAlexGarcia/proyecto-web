@@ -6,12 +6,18 @@ class conexionBaseDatos
     private $host = 'aws-0-us-east-1.pooler.supabase.com'; // Reemplaza con el host de tu región
     private $puerto = '5432';
     private $usuario = 'postgres.uyfnodirunbtuvhepzqt';          // Formato: postgres.[id-proyecto]
-    private $contrasena = 'D@ni1el2030';
     private $base_de_datos = 'postgres';                   // En Supabase la BD principal es 'postgres'
     private $conexion;
+    private $contrasena;
 
     public function __construct()
     {
+        $pass = getenv('DB_PASS_SUPABASE');
+        if (!$pass) {
+            $cfg = require __DIR__ . '/../auth/secretos.php';
+            $pass = $cfg['DB_PASS_SUPABASE'] ?? '';
+        }
+        $this->contrasena = $pass;
         try {
             $dsn = "pgsql:host={$this->host};port={$this->puerto};dbname={$this->base_de_datos};sslmode=require";
 
@@ -20,7 +26,9 @@ class conexionBaseDatos
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             ]);
         } catch (PDOException $e) {
-            die("Error de conexión: " . $e->getMessage());
+            error_log('[bd] ' . $e->getMessage());
+            http_response_code(500);
+            exit('No se pudo conectar a la base de datos.');
         }
     }
 

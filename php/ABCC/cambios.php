@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../auth/autenticacion.php';
+require_once __DIR__ . '/../validacionesCita.php';
 $u = requerirSesionApi(['paciente', 'personal']); // o solo ['personal'] según el endpoint
 header('Content-Type: application/json; charset=utf-8');
 
