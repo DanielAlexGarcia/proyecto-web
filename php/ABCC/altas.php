@@ -80,9 +80,11 @@ $soloPersonal = [
     'empleado_transaccion'
 ];
 $tiposDeEmpleado = ['empleado', 'empleado_existente', 'empleado_transaccion'];
-if ($u['tipo'] === 'personal'
+if (
+    $u['tipo'] === 'personal'
     && in_array($tipo, $tiposDeEmpleado, true)
-    && mb_strtolower($u['cargo'] ?? '') !== 'administrador') {
+    && mb_strtolower($u['cargo'] ?? '') !== 'administrador'
+) {
     $db->responder(403, ['ok' => false, 'error' => 'Solo administración puede dar de alta empleados.']);
 }
 
@@ -98,13 +100,33 @@ if ($u['tipo'] === 'paciente') {
 
 try {
     switch ($tipo) {
-        case 'persona':              ValidadorPersonas::persona($datos); break;
-        case 'paciente':             ValidadorPersonas::paciente($datos); break;
-        case 'paciente_existente':   ValidadorPersonas::paciente($datos); ValidadorPersonas::credenciales($datos); break;
-        case 'paciente_transaccion': ValidadorPersonas::persona($datos); ValidadorPersonas::paciente($datos); ValidadorPersonas::credenciales($datos); break;
-        case 'empleado':             ValidadorPersonas::empleado($datos); break;
-        case 'empleado_existente':   ValidadorPersonas::empleado($datos); ValidadorPersonas::credenciales($datos); break;
-        case 'empleado_transaccion': ValidadorPersonas::persona($datos); ValidadorPersonas::empleado($datos); ValidadorPersonas::credenciales($datos); break;
+        case 'persona':
+            ValidadorPersonas::persona($datos);
+            break;
+        case 'paciente':
+            ValidadorPersonas::paciente($datos);
+            break;
+        case 'paciente_existente':
+            ValidadorPersonas::paciente($datos);
+            ValidadorPersonas::credenciales($datos);
+            break;
+        case 'paciente_transaccion':
+            ValidadorPersonas::persona($datos);
+            ValidadorPersonas::paciente($datos);
+            ValidadorPersonas::credenciales($datos);
+            break;
+        case 'empleado':
+            ValidadorPersonas::empleado($datos);
+            break;
+        case 'empleado_existente':
+            ValidadorPersonas::empleado($datos);
+            ValidadorPersonas::credenciales($datos);
+            break;
+        case 'empleado_transaccion':
+            ValidadorPersonas::persona($datos);
+            ValidadorPersonas::empleado($datos);
+            ValidadorPersonas::credenciales($datos);
+            break;
     }
 } catch (InvalidArgumentException $e) {
     $db->responder(422, ['ok' => false, 'error' => $e->getMessage()]);
@@ -301,16 +323,15 @@ try {
                 (int) $datos['doctor_id']
             );
 
-            if ((new CitaDAO($pdo))->existeChoque((int) $datos['doctor_id'], $datos['fecha_hora'])) {
-    $db->responder(409, ['ok' => false, 'error' => 'Ese médico ya tiene una cita en ese horario.']);
-}
-
-            (new CitaDAO($pdo))->insertar($cita);
+            $idCita = (new CitaDAO($pdo))->guardarSinChoque($cita);
+            if ($idCita === null) {
+                $db->responder(409, ['ok' => false, 'error' => 'Ese médico ya tiene una cita en ese horario.']);
+            }
 
             $db->responder(201, [
                 'ok' => true,
                 'mensaje' => 'Cita registrada.',
-                'idCita' => (int) $pdo->lastInsertId()
+                'idCita' => $idCita
             ]);
             break;
 

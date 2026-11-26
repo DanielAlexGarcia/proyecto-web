@@ -40,7 +40,7 @@ if ($metodo === 'PUT') {
     $tipoEntidad = null;
     $clavesRecibidas = array_keys($datos);
     $claveId = [0 => 'id', 1 => 'personaID', 2 => 'personaID', 3 => 'id'][$tipoEntidad];
-ValidadorCitas::validarEnteroPositivo($datos[$claveId], $claveId);
+    ValidadorCitas::validarEnteroPositivo($datos[$claveId], $claveId);
 
     foreach ($estructuraDatos as $indice => $camposEsperados) {
         if (
@@ -103,30 +103,42 @@ ValidadorCitas::validarEnteroPositivo($datos[$claveId], $claveId);
         }
     }
 
-if ($u['tipo'] === 'personal') {
-    if ($tipoEntidad === 3) {
-        $datos['fechaHora'] = ValidadorCitas::validarFechaHora($datos['fechaHora'], true, false);
-        $datos['motivo']    = ValidadorCitas::validarMotivo($datos['motivo']);
-        $datos['estado']    = ValidadorCitas::validarEstado($datos['estado']);
-        $datos['doctorID']  = ValidadorCitas::validarEnteroPositivo($datos['doctorID'], 'doctorID');
-    } else {
+    if ($u['tipo'] === 'personal') {
+        if ($tipoEntidad === 3) {
+            $datos['fechaHora'] = ValidadorCitas::validarFechaHora($datos['fechaHora'], true, false);
+            $datos['motivo'] = ValidadorCitas::validarMotivo($datos['motivo']);
+            $datos['estado'] = ValidadorCitas::validarEstado($datos['estado']);
+            $datos['doctorID'] = ValidadorCitas::validarEnteroPositivo($datos['doctorID'], 'doctorID');
+        } else {
 
-        try {
-            switch ($tipoEntidad) {
-                case 0: ValidadorPersonas::persona([
-                    'nombres' => $datos['nombres'], 'primer_apellido' => $datos['primerAP'],
-                    'segundo_apellido' => $datos['segundoAP'], 'fecha_nacimiento' => $datos['fechaNaci'],
-                    'genero' => $datos['genero'], 'direccion' => $datos['Direccion']]); break;
-                case 1: ValidadorPersonas::empleado($datos); break;
-                case 2: ValidadorPersonas::paciente([
-                    'num_seguro' => $datos['numSeguro'], 'grupo_sanguineo' => $datos['grupSanginio'],
-                    'alergias' => $datos['alergias']]); break;
+            try {
+                switch ($tipoEntidad) {
+                    case 0:
+                        ValidadorPersonas::persona([
+                            'nombres' => $datos['nombres'],
+                            'primer_apellido' => $datos['primerAP'],
+                            'segundo_apellido' => $datos['segundoAP'],
+                            'fecha_nacimiento' => $datos['fechaNaci'],
+                            'genero' => $datos['genero'],
+                            'direccion' => $datos['Direccion']
+                        ]);
+                        break;
+                    case 1:
+                        ValidadorPersonas::empleado($datos);
+                        break;
+                    case 2:
+                        ValidadorPersonas::paciente([
+                            'num_seguro' => $datos['numSeguro'],
+                            'grupo_sanguineo' => $datos['grupSanginio'],
+                            'alergias' => $datos['alergias']
+                        ]);
+                        break;
+                }
+            } catch (InvalidArgumentException $e) {
+                $cons->responder(422, ['error' => $e->getMessage()]);
             }
-        } catch (InvalidArgumentException $e) {
-            $cons->responder(422, ['error' => $e->getMessage()]);
         }
     }
-}
 
     try {
         $exito = false;
@@ -186,11 +198,11 @@ if ($u['tipo'] === 'personal') {
                     (int) $datos['doctorID']
                 );
                 $dao = new CitaDAO($conexion);
-                if (strtolower($datos['estado']) !== 'cancelada'
-    && (new CitaDAO($conexion))->existeChoque((int) $datos['doctorID'], $datos['fechaHora'], $idActualizado)) {
-    $cons->responder(409, ['error' => 'Ese médico ya tiene una cita en ese horario.']);
-}
-                $exito = $dao->actualizar($cita, $idActualizado);
+                $res = $dao->guardarSinChoque($cita, $idActualizado);
+                if ($res === null) {
+                    $cons->responder(409, ['error' => 'Ese médico ya tiene una cita en ese horario.']);
+                }
+                $exito = true;
                 break;
         }
 

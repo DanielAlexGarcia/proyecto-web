@@ -112,34 +112,36 @@ $esFetch = ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'fetch';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
 
-ValidadorCitas::$lanzarExcepcion = true;
+        ValidadorCitas::$lanzarExcepcion = true;
 
-if (in_array($accion, ['crear_paciente_nuevo', 'editar_paciente'], true)) {
-    ValidadorPersonas::persona($_POST);
-}
-if (in_array($accion, ['crear_paciente_existente', 'crear_paciente_nuevo', 'editar_paciente'], true)) {
-    ValidadorPersonas::paciente($_POST);
-}
-if (in_array($accion, ['crear_paciente_existente', 'crear_paciente_nuevo'], true)) {
-    ValidadorPersonas::credenciales($_POST);
-}
-if (in_array($accion, ['crear_cita', 'editar_cita'], true)) {
-    $fh     = ValidadorCitas::validarFechaHora(fechaSQL(post('fecha_hora')), $accion === 'editar_cita', false);
-    $estado = ValidadorCitas::validarEstado(post('estado') ?: 'Pendiente');
-    $doc    = ValidadorCitas::validarEnteroPositivo(post('doctor_id'), 'doctor_id');
-    $_POST['motivo'] = ValidadorCitas::validarMotivo(post('motivo'));
-    if ($accion === 'crear_cita') {
-        ValidadorCitas::validarEnteroPositivo(post('paciente_id'), 'paciente_id');
-    }
-    $excluir = $accion === 'editar_cita' ? (int) post('id_cita') : null;
-    if (strtolower($estado) !== 'cancelada'
-        && (new CitaDAO($pdo))->existeChoque($doc, $fh, $excluir)) {
-        throw new InvalidArgumentException('Ese médico ya tiene una cita en ese horario.');
-    }
-}
-if (in_array($accion, ['consultar_fn_citas'], true)) {
-    ValidadorCitas::validarEnteroPositivo(post('paciente_id'), 'paciente_id');
-}
+        if (in_array($accion, ['crear_paciente_nuevo', 'editar_paciente'], true)) {
+            ValidadorPersonas::persona($_POST);
+        }
+        if (in_array($accion, ['crear_paciente_existente', 'crear_paciente_nuevo', 'editar_paciente'], true)) {
+            ValidadorPersonas::paciente($_POST);
+        }
+        if (in_array($accion, ['crear_paciente_existente', 'crear_paciente_nuevo'], true)) {
+            ValidadorPersonas::credenciales($_POST);
+        }
+        if (in_array($accion, ['crear_cita', 'editar_cita'], true)) {
+            $fh = ValidadorCitas::validarFechaHora(fechaSQL(post('fecha_hora')), $accion === 'editar_cita', false);
+            $estado = ValidadorCitas::validarEstado(post('estado') ?: 'Pendiente');
+            $doc = ValidadorCitas::validarEnteroPositivo(post('doctor_id'), 'doctor_id');
+            $_POST['motivo'] = ValidadorCitas::validarMotivo(post('motivo'));
+            if ($accion === 'crear_cita') {
+                ValidadorCitas::validarEnteroPositivo(post('paciente_id'), 'paciente_id');
+            }
+            $excluir = $accion === 'editar_cita' ? (int) post('id_cita') : null;
+            if (
+                strtolower($estado) !== 'cancelada'
+                && (new CitaDAO($pdo))->existeChoque($doc, $fh, $excluir)
+            ) {
+                throw new InvalidArgumentException('Ese médico ya tiene una cita en ese horario.');
+            }
+        }
+        if (in_array($accion, ['consultar_fn_citas'], true)) {
+            ValidadorCitas::validarEnteroPositivo(post('paciente_id'), 'paciente_id');
+        }
 
         // 1. Paciente desde persona existente (procedimiento almacenado)
         if ($accion === 'crear_paciente_existente') {
@@ -224,35 +226,41 @@ if (in_array($accion, ['consultar_fn_citas'], true)) {
             $mensaje = "Datos del paciente #$idPaciente actualizados correctamente (auditado por triggers).";
         }
 
-        // 4. Crear cita
+        /// 4. Crear cita
         elseif ($accion === 'crear_cita') {
-            $pdo->prepare("INSERT INTO citas (fecha_hora, motivo, estado, paciente_id, doctor_id)
-                           VALUES (:fh, :motivo, :estado, :pac, :doc)")
-                ->execute([
-                    ':fh' => fechaSQL(post('fecha_hora')),
-                    ':motivo' => post('motivo'),
-                    ':estado' => post('estado') ?: 'Pendiente',
-                    ':pac' => (int) post('paciente_id'),
-                    ':doc' => (int) post('doctor_id'),
-                ]);
+            $res = (new CitaDAO($pdo))->guardarSinChoque(new Cita(
+                fechaSQL(post('fecha_hora')),
+                post('motivo'),
+                post('estado') ?: 'Pendiente',
+                (int) post('paciente_id'),
+                (int) post('doctor_id')
+            ));
+            if ($res === null) {
+                throw new InvalidArgumentException('Ese médico ya tiene una cita en ese horario.');
+            }
             $mensaje = "Cita médica agendada correctamente.";
         }
 
         // 5. Modificar cita
         elseif ($accion === 'editar_cita') {
             $idCita = (int) post('id_cita');
-            $pdo->prepare("UPDATE citas SET fecha_hora = :fh, motivo = :motivo, estado = :estado, doctor_id = :doc
-                           WHERE id = :id")
-                ->execute([
-                    ':fh' => fechaSQL(post('fecha_hora')),
-                    ':motivo' => post('motivo'),
-                    ':estado' => post('estado'),
-                    ':doc' => (int) post('doctor_id'),
-                    ':id' => $idCita,
-                ]);
+            $dao = new CitaDAO($pdo);
+            $actual = $dao->obtenerPorId($idCita);
+            if (!$actual) {
+                throw new InvalidArgumentException('La cita no existe.');
+            }
+            $res = $dao->guardarSinChoque(new Cita(
+                fechaSQL(post('fecha_hora')),
+                post('motivo'),
+                post('estado'),
+                (int) $actual->getPacienteID(),   // se conserva el paciente original
+                (int) post('doctor_id')
+            ), $idCita);
+            if ($res === null) {
+                throw new InvalidArgumentException('Ese médico ya tiene una cita en ese horario.');
+            }
             $mensaje = "Cita #$idCita actualizada correctamente.";
         }
-
         // 6. Función almacenada fn_citas_proximas
         elseif ($accion === 'consultar_fn_citas') {
             $stmt = $pdo->prepare("SELECT fn_citas_proximas(:pac, :fecha) AS resultado");
@@ -271,9 +279,9 @@ if (in_array($accion, ['consultar_fn_citas'], true)) {
         }
 
     } catch (InvalidArgumentException $e) {
-    $tipoMensaje = 'error';
-    $mensaje = $e->getMessage();
-} catch (Throwable $e) {
+        $tipoMensaje = 'error';
+        $mensaje = $e->getMessage();
+    } catch (Throwable $e) {
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
         }
