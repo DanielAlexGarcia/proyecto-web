@@ -1,8 +1,8 @@
 <?php
 
-class conexionBaseDatos
+class ConexionMysql implements ConexionInterface
 {
-    private static ?conexionBaseDatos $instancia = null;
+    private static ?self $instancia = null;
 
     private $host = 'localhost';
     private $usuario = 'root';
@@ -10,7 +10,7 @@ class conexionBaseDatos
     private $base_de_datos = 'clinica';
     private $conexion;
 
-    private function __construct()      // antes: public
+    private function __construct()
     {
         try {
             $this->conexion = new PDO(
@@ -20,7 +20,7 @@ class conexionBaseDatos
             );
             $this->conexion->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch (PDOException $e) {
-            die("Error de conexión: " . $e->getMessage());
+            throw new RuntimeException("Error de conexión: " . $e->getMessage(), 0, $e);
         }
     }
 
@@ -33,26 +33,15 @@ class conexionBaseDatos
     }
 
     private function __clone() {}
-    public function __wakeup() { throw new Exception('No se puede deserializar un Singleton.'); }
 
+    public function __wakeup()
+    {
+        throw new Exception('No se puede deserializar un Singleton.');
+    }
 
     // Método para obtener la conexión activa
     public function getConexion()
     {
         return $this->conexion;
     }
-    function responder($codigo, array $datos)
-    {
-        http_response_code($codigo);
-        echo json_encode($datos, JSON_UNESCAPED_UNICODE);
-        exit;
-    }
-
-    /** Lee y decodifica el cuerpo JSON de la petición. */
-    function leerJSON()
-    {
-        $datos = json_decode(file_get_contents('php://input'), true);
-        return is_array($datos) ? $datos : null;
-    }
 }
-?>

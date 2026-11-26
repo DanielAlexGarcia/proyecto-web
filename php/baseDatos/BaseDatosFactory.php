@@ -1,35 +1,25 @@
 <?php
-// php/baseDatos/BaseDatosFactory.php
-//
-// Fábrica que decide qué motor de base de datos se usa (MySQL local o Supabase)
-// y entrega la conexión y los DAOs correspondientes. El resto del proyecto solo
-// conoce las interfaces (ConexionInterface y *DAOInterface), nunca el motor.
-//
-// Cambiar de motor = definir la variable de entorno DB_DRIVER:
-//   DB_DRIVER=mysql      (valor por defecto)
-//   DB_DRIVER=supabase
-//
-// Requisitos previos (según el refactor propuesto):
-//   php/baseDatos/ConexionInterface.php
-//   php/baseDatos/conexionBaseDatos.php   -> class ConexionMySQL    implements ConexionInterface (Singleton)
-//   php/baseDatos/BDsupabase.php          -> class ConexionSupabase implements ConexionInterface (Singleton)
-//   php/modelosDAO/{Persona,Paciente,Empleado,Cita}DAOInterface.php
-//   php/modelosDAO/{persona,paciente,empleado,cita}DAO.php                       -> *DAOMySQL
-//   php/modelosDAO/modelosDAOSupabase/{persona,paciente,empleado,cita}DAOsup.php -> *DAOSupabase
 
 declare(strict_types=1);
+$d = getenv('DB_DRIVER');
+if (!$d && is_file(__DIR__ . '/../auth/secretos.php')) {
+    $d = (require __DIR__ . '/../auth/secretos.php')['DB_DRIVER'] ?? '';
+}
+$d = strtolower(trim($d ?: self::MYSQL));
 
 require_once __DIR__ . '/ConexionInterface.php';
 
 final class BaseDatosFactory
 {
-    public const MYSQL    = 'mysql';
+    public const MYSQL = 'mysql';
     public const SUPABASE = 'supabase';
 
     private static ?string $driver = null;
 
     /** Evita instanciar la fábrica: solo se usan sus métodos estáticos. */
-    private function __construct() {}
+    private function __construct()
+    {
+    }
 
     // ---------------------------------------------------------------------
     // Motor activo

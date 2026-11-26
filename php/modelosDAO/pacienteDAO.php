@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../modelos/paciente.php';
 
-class PacienteDAO
+class PacienteDAOMySQL implements PacienteDAOInterface
 {
     private PDO $conexion;
 

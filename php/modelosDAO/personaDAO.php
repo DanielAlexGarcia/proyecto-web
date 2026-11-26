@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../modelos/persona.php';
 
-class PersonaDAO
+class PersonaDAOMySQL implements PersonaDAOInterface
 {
     private PDO $conexion;
 

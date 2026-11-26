@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../modelos/empleado.php';
 
-class EmpleadoDAO
+class EmpleadoDAOMySQL implements EmpleadoDAOInterface
 {
     private PDO $conexion;
 
