@@ -71,8 +71,6 @@ class ValidadorEntradaAltas
         }
 
         if (!empty($faltan)) {
-            $error = new InvalidArgumentException('Faltan campos obligatorios: ' . implode(', ', $faltan));
-            // Guardamos el arreglo en una excepción personalizada o lo pasamos en el mensaje
             throw new ExcepcionCamposFaltantes($faltan);
         }
     }
@@ -80,7 +78,7 @@ class ValidadorEntradaAltas
 
 class ExcepcionCamposFaltantes extends InvalidArgumentException
 {
-    public function __construct(public readonly array $faltan)
+    public function __construct(public array $faltan)
     {
         parent::__construct('Faltan campos obligatorios.');
     }
