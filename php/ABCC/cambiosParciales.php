@@ -6,17 +6,10 @@ ValidadorCitas::$lanzarExcepcion = true;
 $u = requerirCargoApi(['administrador']);
 header('Content-Type: application/json; charset=utf-8');
 
-include_once __DIR__ . '/../baseDatos/conexionBaseDatos.php';
-
-foreach (glob(__DIR__ . '/../modelos/*.php') as $modelo) {
-    require_once $modelo;
-}
-foreach (glob(__DIR__ . '/../modelosDAO/*.php') as $dao) {
-    require_once $dao;
-}
-
-$cons = conexionBaseDatos::getInstancia();
+require_once __DIR__ . '/../baseDatos/BaseDatosFactory.php';
+$cons     = BaseDatosFactory::conexion();   // también carga los modelos
 $conexion = $cons->getConexion();
+
 $metodo = $_SERVER['REQUEST_METHOD'];
 
 // Primer elemento = identificador requerido; el resto = campos permitidos para cambio parcial

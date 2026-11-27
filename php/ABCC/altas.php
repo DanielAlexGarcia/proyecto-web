@@ -1,6 +1,6 @@
 <?php
-require_once __DIR__ . '/../auth/autenticacion.php';
-require_once __DIR__ . '/../validacionesCita.php';
+require_once __DIR__ . '/../baseDatos/BaseDatosFactory.php';
+require_once __DIR__ . '/../validaciones/validacionesPersona.php';
 // php/ABCC/altas.php
 // Endpoint de ALTAS. Recibe JSON por POST y responde JSON.
 // El campo "tipo" indica qué alta se realiza.
@@ -25,7 +25,7 @@ require_once __DIR__ . '/../validaciones/validacionesPersona.php';
 
 $u = requerirSesionApi(['paciente', 'personal']);
 
-$db = conexionBaseDatos::getInstancia();
+$db = BaseDatosFactory::conexion();
 $pdo = $db->getConexion();
 
 // ---------------------------------------------------------------------------
@@ -148,13 +148,8 @@ try {
                 $datos['direccion'] ?? null
             );
 
-            (new PersonaDAO($pdo))->insertar($persona);
-
-            $db->responder(201, [
-                'ok' => true,
-                'mensaje' => 'Persona registrada.',
-                'idPersona' => (int) $pdo->lastInsertId()
-            ]);
+            $idPersona = BaseDatosFactory::persona($pdo)->insertarRetornandoId($persona);
+$db->responder(201, ['ok' => true, 'mensaje' => 'Persona registrada.', 'idPersona' => $idPersona]);
             break;
 
         // ---- Paciente (persona existente, sin usuario) ---------------------

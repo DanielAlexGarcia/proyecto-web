@@ -3,18 +3,10 @@ require_once __DIR__ . '/../auth/autenticacion.php';
 $u = requerirCargoApi(['administrador']);
 header('Content-Type: application/json; charset=utf-8');
 
-include_once('../baseDatos/conexionBaseDatos.php');
-
-// Cargar automáticamente todos los modelos y DAOs
-foreach (glob('../modelos/*.php') as $modelo) {
-    require_once $modelo;
-}
-foreach (glob('../modelosDAO/*.php') as $dao) {
-    require_once $dao;
-}
-
-$cons = conexionBaseDatos::getInstancia();
+require_once __DIR__ . '/../baseDatos/BaseDatosFactory.php';
+$cons     = BaseDatosFactory::conexion();   // también carga los modelos
 $conexion = $cons->getConexion();
+
 $metodo = $_SERVER['REQUEST_METHOD'];
 
 // Estructura esperada en la petición (ej. {"entidad": "persona", "id": 1})
