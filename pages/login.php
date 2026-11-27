@@ -108,12 +108,13 @@ if ($cone && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'El código de verificación (CAPTCHA) es incorrecto.';
     } else {
         try {
-            $usuario['id_persona'];
+            $usuario = verificarUsuario($cone, $user, $password);
 
             if (!$usuario) {
                 $error = 'Correo electrónico o contraseña incorrectos.';
             } else {
-                $idPersona = (int) ($usuario['idDocPac'] ?? 0);
+                $idPersona = (int) ($usuario['id_persona'] ?? 0);   // antes: idDocPac
+
 
                 if ($tipoAcceso === 'paciente') {
                     $datos = $idPersona ? obtenerDatosPaciente($cone, $idPersona) : false;
