@@ -1,7 +1,8 @@
 <?php
 require_once __DIR__ . '/../modelos/cita.php';
+require_once __DIR__ . '/CitaDAOInterface.php';
 
-class CitaDAO
+class CitaDAOMySQL implements CitaDAOInterface
 {
     private PDO $conexion;
 
@@ -10,56 +11,52 @@ class CitaDAO
         $this->conexion = $conexion;
     }
 
-    // ALTA (Insertar registro)
     public function insertar(Cita $cita): bool
     {
-        $sql = "INSERT INTO citas (fecha_hora, motivo, estado, paciente_id, doctor_id) 
-                VALUES (:fechaHora, :motivo, :estado, :pacienteID, :doctorID)";
-
-        $stmt = $this->conexion->prepare($sql);
-
+        $stmt = $this->conexion->prepare(
+            "INSERT INTO citas (fecha_hora, motivo, estado, paciente_id, doctor_id)
+             VALUES (:fechaHora, :motivo, :estado, :pacienteID, :doctorID)"
+        );
         return $stmt->execute([
-            ':fechaHora' => $cita->getFechaHora(),
-            ':motivo' => $cita->getMotivo(),
-            ':estado' => $cita->getEstado(),
+            ':fechaHora'  => $cita->getFechaHora(),
+            ':motivo'     => $cita->getMotivo(),
+            ':estado'     => $cita->getEstado(),
             ':pacienteID' => $cita->getPacienteID(),
-            ':doctorID' => $cita->getDoctorID()
+            ':doctorID'   => $cita->getDoctorID()
         ]);
     }
 
-    // BAJA (Eliminar por ID de cita)
+    public function insertarRetornandoId(Cita $cita): ?int
+    {
+        if ($this->insertar($cita)) {
+            return (int) $this->conexion->lastInsertId();
+        }
+        return null;
+    }
+
     public function eliminar(int $id): bool
     {
-        $sql = "DELETE FROM citas WHERE id = :id";
-        $stmt = $this->conexion->prepare($sql);
-
+        $stmt = $this->conexion->prepare("DELETE FROM citas WHERE id = :id");
         return $stmt->execute([':id' => $id]);
     }
 
-    // CAMBIO (Actualizar cita por ID)
     public function actualizar(Cita $cita, int $id): bool
     {
-        $sql = "UPDATE citas SET 
-                    fecha_hora = :fechaHora, 
-                    motivo = :motivo, 
-                    estado = :estado, 
-                    paciente_id = :pacienteID, 
-                    doctor_id = :doctorID 
-                WHERE id = :id";
-
-        $stmt = $this->conexion->prepare($sql);
-
+        $stmt = $this->conexion->prepare(
+            "UPDATE citas SET fecha_hora = :fechaHora, motivo = :motivo, estado = :estado,
+                    paciente_id = :pacienteID, doctor_id = :doctorID
+             WHERE id = :id"
+        );
         return $stmt->execute([
-            ':fechaHora' => $cita->getFechaHora(),
-            ':motivo' => $cita->getMotivo(),
-            ':estado' => $cita->getEstado(),
+            ':fechaHora'  => $cita->getFechaHora(),
+            ':motivo'     => $cita->getMotivo(),
+            ':estado'     => $cita->getEstado(),
             ':pacienteID' => $cita->getPacienteID(),
-            ':doctorID' => $cita->getDoctorID(),
-            ':id' => $id
+            ':doctorID'   => $cita->getDoctorID(),
+            ':id'         => $id
         ]);
     }
 
-    // CONSULTA GENERAL (Incluye nombres de paciente y doctor listos para JSON)
     public function obtenerTodos(): array
     {
         $sql = "SELECT c.id, c.fecha_hora, c.motivo, c.estado,
@@ -71,44 +68,32 @@ class CitaDAO
                 INNER JOIN personas pp ON c.paciente_id = pp.id
                 INNER JOIN personas pd ON c.doctor_id = pd.id
                 ORDER BY c.fecha_hora DESC";
-
-        $stmt = $this->conexion->query($sql);
-
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $this->conexion->query($sql)->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // CONSULTA INDIVIDUAL (Devuelve una instancia del modelo Cita)
     public function obtenerPorId(int $id): ?Cita
     {
-        $sql = "SELECT * FROM citas WHERE id = :id";
-        $stmt = $this->conexion->prepare($sql);
+        $stmt = $this->conexion->prepare("SELECT * FROM citas WHERE id = :id");
         $stmt->execute([':id' => $id]);
-
         $fila = $stmt->fetch(PDO::FETCH_ASSOC);
-
         if (!$fila) {
             return null;
         }
-
-        return new Cita(
-            $fila['fecha_hora'],
-            $fila['motivo'],
-            $fila['estado'],
-            $fila['paciente_id'],
-            $fila['doctor_id']
-        );
+        return new Cita($fila['fecha_hora'], $fila['motivo'], $fila['estado'], $fila['paciente_id'], $fila['doctor_id']);
     }
+
     public function existeChoque(int $doctorId, string $fechaHora, ?int $excluirId = null): bool
     {
         $stmt = $this->conexion->prepare(
             "SELECT 1 FROM citas
-         WHERE doctor_id = :d AND fecha_hora = :f
-           AND LOWER(estado) <> 'cancelada' AND id <> :x
-         LIMIT 1"
+             WHERE doctor_id = :d AND fecha_hora = :f
+               AND LOWER(estado) <> 'cancelada' AND id <> :x
+             LIMIT 1"
         );
         $stmt->execute([':d' => $doctorId, ':f' => $fechaHora, ':x' => $excluirId ?? 0]);
         return (bool) $stmt->fetchColumn();
     }
+
     public function guardarSinChoque(Cita $cita, ?int $id = null): ?int
     {
         $propia = !$this->conexion->inTransaction();
@@ -117,10 +102,8 @@ class CitaDAO
         }
 
         try {
-            // Bloqueo: otra petición para el mismo doctor espera aquí hasta el commit
-            $lock = $this->conexion->prepare(
-                "SELECT id_persona FROM empleados WHERE id_persona = :d FOR UPDATE"
-            );
+            // Bloqueo por doctor: otra petición para el mismo doctor espera hasta el commit
+            $lock = $this->conexion->prepare("SELECT id_persona FROM empleados WHERE id_persona = :d FOR UPDATE");
             $lock->execute([':d' => $cita->getDoctorID()]);
             $lock->fetchColumn();
 
@@ -128,23 +111,23 @@ class CitaDAO
                 strtolower((string) $cita->getEstado()) !== 'cancelada'
                 && $this->existeChoque((int) $cita->getDoctorID(), $cita->getFechaHora(), $id)
             ) {
-                if ($propia)
+                if ($propia) {
                     $this->conexion->rollBack();
+                }
                 return null;
             }
 
             if ($id === null) {
-                $this->insertar($cita);
-                $resultado = (int) $this->conexion->lastInsertId();
+                $resultado = $this->insertarRetornandoId($cita);
             } else {
                 $this->actualizar($cita, $id);
                 $resultado = $id;
             }
 
-            if ($propia)
+            if ($propia) {
                 $this->conexion->commit();
+            }
             return $resultado;
-
         } catch (Throwable $e) {
             if ($propia && $this->conexion->inTransaction()) {
                 $this->conexion->rollBack();
@@ -153,4 +136,3 @@ class CitaDAO
         }
     }
 }
-?>

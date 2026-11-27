@@ -1,42 +1,28 @@
 <?php
 require_once __DIR__ . '/../../modelos/persona.php';
+require_once __DIR__ . '/../PersonaDAOInterface.php';
 
-class PersonaDAO
+class PersonaDAOSupabase implements PersonaDAOInterface
 {
     private PDO $conexion;
 
-    // Recibe la conexión PDO como parámetro
-    public function __construct(PDO $conexion){
+    public function __construct(PDO $conexion)
+    {
         $this->conexion = $conexion;
     }
 
-    // ALTA (Insertar registro)
-    public function insertar(persona $persona): bool{
-        $sql = "INSERT INTO personas (nombres, primer_apellido, segundo_apellido, fecha_nacimiento, genero, direccion) 
-                VALUES (:nombres, :primerApellido, :segundoApellido, :fechaNacimiento, :genero, :direccion)";
-
-        $stmt = $this->conexion->prepare($sql);
-
-        return $stmt->execute([
-            ':nombres'         => $persona->getNombres(),
-            ':primerApellido'  => $persona->getPrimerApellido(),
-            ':segundoApellido' => $persona->getSegundoApellido(),
-            ':fechaNacimiento' => $persona->getFechaNacimiento(),
-            ':genero'          => $persona->getGenero(),
-            ':direccion'       => $persona->getCURP()
-        ]);
+    public function insertar(persona $persona): bool
+    {
+        return $this->insertarRetornandoId($persona) !== null;
     }
 
-    // ALTA RETORNANDO ID (Inserta la persona y devuelve su ID autogenerado)
     public function insertarRetornandoId(persona $persona): ?int
     {
-        $sql = "INSERT INTO personas (nombres, primer_apellido, segundo_apellido, fecha_nacimiento, genero, direccion) 
+        $sql = "INSERT INTO personas (nombres, primer_apellido, segundo_apellido, fecha_nacimiento, genero, direccion)
                 VALUES (:nombres, :primerApellido, :segundoApellido, :fechaNacimiento, :genero, :direccion)
                 RETURNING id";
-
         $stmt = $this->conexion->prepare($sql);
-
-        $ejecutado = $stmt->execute([
+        $stmt->execute([
             ':nombres'         => $persona->getNombres(),
             ':primerApellido'  => $persona->getPrimerApellido(),
             ':segundoApellido' => $persona->getSegundoApellido(),
@@ -44,34 +30,26 @@ class PersonaDAO
             ':genero'          => $persona->getGenero(),
             ':direccion'       => $persona->getCURP()
         ]);
-
-        if ($ejecutado) {
-            $id = $stmt->fetchColumn();
-            return $id !== false ? (int) $id : null;
-        }
-
-        return null;
+        $id = $stmt->fetchColumn();
+        return $id !== false ? (int) $id : null;
     }
 
-    // BAJA (Eliminar por ID)
-    public function eliminar(int $id): bool{
-        $sql = "DELETE FROM personas WHERE id = :id";
-        $stmt = $this->conexion->prepare($sql);
-
+    public function eliminar(int $id): bool
+    {
+        $stmt = $this->conexion->prepare("DELETE FROM personas WHERE id = :id");
         return $stmt->execute([':id' => $id]);
     }
 
-    // CAMBIO (Actualizar por ID)
-    public function actualizar(persona $persona, int $id): bool{
-        $sql = "UPDATE personas SET 
-                    nombres = :nombres, 
-                    primer_apellido = :primerApellido, 
-                    segundo_apellido = :segundoApellido, 
-                    fecha_nacimiento = :fechaNacimiento, 
-                    genero = :genero, 
-                    direccion = :direccion 
+    public function actualizar(persona $persona, int $id): bool
+    {
+        $sql = "UPDATE personas SET
+                    nombres = :nombres,
+                    primer_apellido = :primerApellido,
+                    segundo_apellido = :segundoApellido,
+                    fecha_nacimiento = :fechaNacimiento,
+                    genero = :genero,
+                    direccion = :direccion
                 WHERE id = :id";
-
         $stmt = $this->conexion->prepare($sql);
 
         return $stmt->execute([
@@ -85,26 +63,19 @@ class PersonaDAO
         ]);
     }
 
-    // CONSULTA GENERAL (Devuelve arreglos asociativos listos para json_encode)
-    public function obtenerTodos(): array{
-        $sql = "SELECT * FROM personas";
-        $stmt = $this->conexion->query($sql);
-
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    public function obtenerTodos(): array
+    {
+        return $this->conexion->query("SELECT * FROM personas")->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // CONSULTA INDIVIDUAL (Devuelve una instancia del modelo persona)
-    public function obtenerPorId(int $id): ?persona{
-        $sql = "SELECT * FROM personas WHERE id = :id";
-        $stmt = $this->conexion->prepare($sql);
+    public function obtenerPorId(int $id): ?persona
+    {
+        $stmt = $this->conexion->prepare("SELECT * FROM personas WHERE id = :id");
         $stmt->execute([':id' => $id]);
-
         $fila = $stmt->fetch(PDO::FETCH_ASSOC);
-
         if (!$fila) {
             return null;
         }
-
         return new persona(
             $fila['nombres'],
             $fila['primer_apellido'],
@@ -115,4 +86,3 @@ class PersonaDAO
         );
     }
 }
-?>
