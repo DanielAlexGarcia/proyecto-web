@@ -5,13 +5,12 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once __DIR__ . '/../php/auth/autenticacion.php';
 $u = requerirSesionPagina('personal', 'login');
 
-require_once __DIR__ . '/../php/baseDatos/conexionBaseDatos.php';
+require_once __DIR__ . '/../php/baseDatos/BaseDatosFactory.php';
 require_once __DIR__ . '/../php/validacionesCita.php';
 require_once __DIR__ . '/../php/validaciones/validacionesPersona.php';
-require_once __DIR__ . '/../php/modelosDAO/citaDAO.php';
 
-$pdo = conexionBaseDatos::getInstancia()->getConexion();
-$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+
+$pdo = BaseDatosFactory::pdo();
 $empleadoActual = [
     'id_persona' => (int) $u['id_persona'],
     'nombre_completo' => $u['nombre_completo'] ?? 'Personal',
@@ -85,7 +84,7 @@ $obtenerDatosPanel = function (PDO $pdo, array &$erroresLectura): array {
                    c.doctor_id,
                    TRIM(CONCAT_WS(' ', pd.nombres, pd.primer_apellido, pd.segundo_apellido)) AS doctor_nombre_completo,
                    e.cargo AS doctor_cargo,
-                   IFNULL(e.especializacion, 'Sin especialidad') AS doctor_especialidad
+                   COALESCE(e.especializacion, 'Sin especialidad') AS doctor_especialidad
             FROM citas c
             INNER JOIN personas pp ON pp.id = c.paciente_id
             INNER JOIN empleados e ON e.id_persona = c.doctor_id
@@ -134,7 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $excluir = $accion === 'editar_cita' ? (int) post('id_cita') : null;
             if (
                 strtolower($estado) !== 'cancelada'
-                && (new CitaDAO($pdo))->existeChoque($doc, $fh, $excluir)
+                && BaseDatosFactory::cita($pdo)->existeChoque($doc, $fh, $excluir)
             ) {
                 throw new InvalidArgumentException('Ese médico ya tiene una cita en ese horario.');
             }
@@ -145,52 +144,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // 1. Paciente desde persona existente (procedimiento almacenado)
         if ($accion === 'crear_paciente_existente') {
-            $stmt = $pdo->prepare("CALL sp_crear_paciente_existente(:id_persona, :num_seguro, :grupo_sanguineo, :alergias, :user, :password)");
-            $stmt->execute([
-                ':id_persona' => (int) post('id_persona'),
-                ':num_seguro' => post('num_seguro'),
-                ':grupo_sanguineo' => postNull('grupo_sanguineo'),
-                ':alergias' => postNull('alergias'),
-                ':user' => post('user'),
-                ':password' => post('password'),
-            ]);
-            $stmt->closeCursor();
-            $mensaje = "Paciente registrado correctamente usando sp_crear_paciente_existente.";
+            BaseDatosFactory::paciente($pdo)->crearConPersonaExistente(
+                new paciente((int) post('id_persona'), post('num_seguro'), postNull('grupo_sanguineo'), postNull('alergias')),
+                post('user'),
+                post('password')
+            );
+            $mensaje = "Paciente registrado correctamente.";
         }
 
         // 2. Paciente completamente nuevo (persona + paciente + usuario)
         elseif ($accion === 'crear_paciente_nuevo') {
             $pdo->beginTransaction();
-
-            $pdo->prepare("INSERT INTO personas (nombres, primer_apellido, segundo_apellido, fecha_nacimiento, genero, direccion)
-                           VALUES (:nombres, :ap1, :ap2, :fnac, :genero, :direccion)")
-                ->execute([
-                    ':nombres' => post('nombres'),
-                    ':ap1' => post('primer_apellido'),
-                    ':ap2' => postNull('segundo_apellido'),
-                    ':fnac' => post('fecha_nacimiento'),
-                    ':genero' => postNull('genero'),
-                    ':direccion' => postNull('direccion'),
-                ]);
-            $nuevoIdPersona = (int) $pdo->lastInsertId();
-
-            $pdo->prepare("INSERT INTO pacientes (id_persona, num_seguro, grupo_sanguineo, alergias)
-                           VALUES (:id, :seg, :gs, :al)")
-                ->execute([
-                    ':id' => $nuevoIdPersona,
-                    ':seg' => post('num_seguro'),
-                    ':gs' => postNull('grupo_sanguineo'),
-                    ':al' => postNull('alergias'),
-                ]);
-
-            // El trigger trg_usuarios_before_insert cifra user y password en SHA1
-            $pdo->prepare("INSERT INTO usuarios (user, password, idDocPac) VALUES (:user, :password, :id)")
-                ->execute([
-                    ':user' => post('user'),
-                    ':password' => post('password'),
-                    ':id' => $nuevoIdPersona,
-                ]);
-
+            $nuevoIdPersona = BaseDatosFactory::persona($pdo)->insertarRetornandoId(new persona(
+                post('nombres'),
+                post('primer_apellido'),
+                postNull('segundo_apellido'),
+                post('fecha_nacimiento'),
+                postNull('genero'),
+                postNull('direccion')
+            ));
+            BaseDatosFactory::paciente($pdo)->insertar(
+                new paciente($nuevoIdPersona, post('num_seguro'), postNull('grupo_sanguineo'), postNull('alergias'))
+            );
+            BaseDatosFactory::usuario($pdo)->crear(post('user'), post('password'), $nuevoIdPersona);
             $pdo->commit();
             $mensaje = "Paciente nuevo creado con ID #$nuevoIdPersona y cuenta de usuario asignada.";
         }
@@ -228,7 +204,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         /// 4. Crear cita
         elseif ($accion === 'crear_cita') {
-            $res = (new CitaDAO($pdo))->guardarSinChoque(new Cita(
+            $res = BaseDatosFactory::cita($pdo)->guardarSinChoque(new Cita(
                 fechaSQL(post('fecha_hora')),
                 post('motivo'),
                 post('estado') ?: 'Pendiente',
@@ -244,7 +220,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // 5. Modificar cita
         elseif ($accion === 'editar_cita') {
             $idCita = (int) post('id_cita');
-            $dao = new CitaDAO($pdo);
+            $dao = BaseDatosFactory::cita($pdo);
             $actual = $dao->obtenerPorId($idCita);
             if (!$actual) {
                 throw new InvalidArgumentException('La cita no existe.');
@@ -263,18 +239,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         // 6. Función almacenada fn_citas_proximas
         elseif ($accion === 'consultar_fn_citas') {
-            $stmt = $pdo->prepare("SELECT fn_citas_proximas(:pac, :fecha) AS resultado");
-            $stmt->execute([
-                ':pac' => (int) post('paciente_id'),
-                ':fecha' => fechaSQL(post('fecha_consulta')),
-            ]);
+            $stmt = $pdo->prepare("SELECT fn_citas_proximas("
+                . BaseDatosFactory::tipado(':pac', 'int') . ", "
+                . BaseDatosFactory::tipado(':fecha', 'fecha') . ") AS resultado");
+
             $resultadoFuncionCitas = (string) $stmt->fetchColumn();
         }
 
         // 7. Función almacenada fn_consultar_empleados
         elseif ($accion === 'consultar_fn_empleados') {
-            $stmt = $pdo->prepare("SELECT fn_consultar_empleados(:rol, :esp) AS resultado");
-            $stmt->execute([':rol' => post('rol'), ':esp' => post('especialidad')]);
+            $stmt = $pdo->prepare("SELECT fn_consultar_empleados("
+                . BaseDatosFactory::tipado(':rol', 'texto') . ", "
+                . BaseDatosFactory::tipado(':esp', 'texto') . ") AS resultado");
             $resultadoFuncionEmpleados = (string) $stmt->fetchColumn();
         }
 

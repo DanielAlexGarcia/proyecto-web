@@ -31,8 +31,7 @@ if ($metodo === 'PUT') {
     // Identificar qué estructura coincide con las llaves recibidas en el JSON
     $tipoEntidad = null;
     $clavesRecibidas = array_keys($datos);
-    $claveId = [0 => 'id', 1 => 'personaID', 2 => 'personaID', 3 => 'id'][$tipoEntidad];
-    ValidadorCitas::validarEnteroPositivo($datos[$claveId], $claveId);
+    
 
     foreach ($estructuraDatos as $indice => $camposEsperados) {
         if (
@@ -50,6 +49,8 @@ if ($metodo === 'PUT') {
             'claves_recibidas' => $clavesRecibidas
         ]);
     }
+    $claveId = [0 => 'id', 1 => 'personaID', 2 => 'personaID', 3 => 'id'][$tipoEntidad];
+    ValidadorCitas::validarEnteroPositivo($datos[$claveId], $claveId);
     // ---- Restricciones para personal ----
     if (
         $u['tipo'] === 'personal'
@@ -64,7 +65,7 @@ if ($metodo === 'PUT') {
             $cons->responder(403, ['error' => 'No tienes permisos para esta acción.']);
         }
 
-        $citaActual = (new CitaDAO($conexion))->obtenerPorId((int) $datos['id']);
+        $citaActual = BaseDatosFactory::cita($conexion)->obtenerPorId((int) $datos['id']);
 
         // 404 (no 403) para no revelar si la cita existe
         if (!$citaActual || (int) $citaActual->getPacienteID() !== (int) $u['paciente_id']) {
@@ -149,7 +150,7 @@ if ($metodo === 'PUT') {
                     $datos['genero'],
                     $datos['Direccion']
                 );
-                $dao = new PersonaDAO($conexion);
+                $dao =BaseDatosFactory::persona($conexion);
                 $exito = $dao->actualizar($persona, $idActualizado);
                 break;
 
@@ -162,7 +163,7 @@ if ($metodo === 'PUT') {
                     $datos['especializacion'],
                     (float) $datos['salario']
                 );
-                $dao = new EmpleadoDAO($conexion);
+                $dao = BaseDatosFactory::empleado($conexion);
                 $exito = $dao->actualizar($empleado);
                 break;
 
@@ -175,7 +176,7 @@ if ($metodo === 'PUT') {
                     $datos['grupSanginio'],
                     $datos['alergias']
                 );
-                $dao = new PacienteDAO($conexion);
+                $dao = BaseDatosFactory::paciente($conexion);
                 $exito = $dao->actualizar($paciente);
                 break;
 
@@ -189,7 +190,7 @@ if ($metodo === 'PUT') {
                     (int) $datos['pacienteID'],
                     (int) $datos['doctorID']
                 );
-                $dao = new CitaDAO($conexion);
+                $dao = BaseDatosFactory::cita($conexion);
                 $res = $dao->guardarSinChoque($cita, $idActualizado);
                 if ($res === null) {
                     $cons->responder(409, ['error' => 'Ese médico ya tiene una cita en ese horario.']);

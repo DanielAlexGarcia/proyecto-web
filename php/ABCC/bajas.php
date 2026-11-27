@@ -53,25 +53,25 @@ if ($metodo === 'DELETE') {
         switch ($entidad) {
             case 'persona':
                 $entidadNombre = 'Persona';
-                $dao = new PersonaDAO($conexion);
+                $dao = BaseDatosFactory::persona($conexion);
                 $exito = $dao->eliminar($id);
                 break;
 
             case 'empleado':
                 $entidadNombre = 'Empleado';
-                $dao = new EmpleadoDAO($conexion);
+                $dao = BaseDatosFactory::empleado($conexion);
                 $exito = $dao->eliminar($id);
                 break;
 
             case 'paciente':
                 $entidadNombre = 'Paciente';
-                $dao = new PacienteDAO($conexion);
+                $dao = BaseDatosFactory::paciente($conexion);
                 $exito = $dao->eliminar($id);
                 break;
 
             case 'cita':
                 $entidadNombre = 'Cita';
-                $dao = new CitaDAO($conexion);
+                $dao = BaseDatosFactory::cita($conexion);
                 $exito = $dao->eliminar($id);
                 break;
 

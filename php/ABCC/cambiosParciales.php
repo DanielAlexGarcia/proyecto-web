@@ -60,7 +60,7 @@ if ($metodo === 'PATCH') {
             case 0: // Cambio parcial de Persona (solo Direccion)
                 $entidadNombre = 'Persona';
                 $idActualizado = (int) $datos['id'];
-                $dao = new PersonaDAO($conexion);
+                $dao = BaseDatosFactory::persona($conexion);
 
                 $persona = $dao->obtenerPorId($idActualizado);
                 if (!$persona) {
@@ -82,7 +82,7 @@ if ($metodo === 'PATCH') {
             case 1: // Cambio parcial de Empleado (especializacion y/o salario)
                 $entidadNombre = 'Empleado';
                 $idActualizado = (int) $datos['personaID'];
-                $dao = new EmpleadoDAO($conexion);
+                $dao = BaseDatosFactory::empleado($conexion);
 
                 $empleado = $dao->obtenerPorId($idActualizado);
                 if (!$empleado) {
@@ -105,7 +105,7 @@ ValidadorPersonas::empleado([
             case 2: // Cambio parcial de Paciente (numSeguro y/o alergias)
                 $entidadNombre = 'Paciente';
                 $idActualizado = (int) $datos['personaID'];
-                $dao = new PacienteDAO($conexion);
+                $dao = BaseDatosFactory::paciente($conexion);
 
                 $paciente = $dao->obtenerPorId($idActualizado);
                 if (!$paciente) {
@@ -128,7 +128,7 @@ ValidadorPersonas::paciente([
             case 3: // Cambio parcial de Cita (fechaHora, estado y/o doctorID)
                 $entidadNombre = 'Cita';
                 $idActualizado = (int) $datos['id'];
-                $dao = new CitaDAO($conexion);
+                $dao = BaseDatosFactory::cita($conexion);
 
                 $cita = $dao->obtenerPorId($idActualizado);
                 if (!$cita) {

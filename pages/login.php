@@ -4,7 +4,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/../php/auth/autenticacion.php';
-require_once __DIR__ . '/../php/baseDatos/conexionBaseDatos.php';
+require_once __DIR__ . '/../php/baseDatos/BaseDatosFactory.php';
 
 function generarCaptcha(): string
 {
@@ -56,8 +56,7 @@ $error = '';
 $cone = null;
 
 try {
-    $con = conexionBaseDatos::getInstancia();
-    $cone = $con->getConexion();
+    $cone = BaseDatosFactory::pdo();
 } catch (Throwable $e) {
     $error = 'No se pudo conectar a la base de datos.';
     error_log('[login] ' . $e->getMessage());
@@ -65,20 +64,7 @@ try {
 
 function verificarUsuario(PDO $conexion, string $user, string $password)
 {
-    $stmt = $conexion->prepare('SELECT * FROM usuarios WHERE `user` = :u LIMIT 1');
-    $stmt->execute([':u' => sha1(trim($user))]);
-    $fila = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$fila) {
-        return false;
-    }
-
-    // Validación directa en SHA1 (VARCHAR 40) sin migrar el cifrado
-    if (hash_equals($fila['password'], sha1($password))) {
-        return $fila;
-    }
-
-    return false;
+    return BaseDatosFactory::usuario($conexion)->buscarPorCredenciales($user, $password) ?? false;
 }
 
 function obtenerDatosPaciente(PDO $conexion, int $idPersona)
@@ -122,7 +108,7 @@ if ($cone && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'El código de verificación (CAPTCHA) es incorrecto.';
     } else {
         try {
-            $usuario = verificarUsuario($cone, $user, $password);
+            $usuario['id_persona'];
 
             if (!$usuario) {
                 $error = 'Correo electrónico o contraseña incorrectos.';

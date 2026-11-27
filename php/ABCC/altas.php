@@ -1,31 +1,16 @@
 <?php
+require_once __DIR__ . '/../auth/autenticacion.php';
 require_once __DIR__ . '/../baseDatos/BaseDatosFactory.php';
+require_once __DIR__ . '/../validacionesCita.php';
 require_once __DIR__ . '/../validaciones/validacionesPersona.php';
-// php/ABCC/altas.php
-// Endpoint de ALTAS. Recibe JSON por POST y responde JSON.
-// El campo "tipo" indica qué alta se realiza.
 
-// Evita que warnings/notices de PHP ensucien la respuesta JSON
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 error_reporting(E_ALL);
-
 header('Content-Type: application/json; charset=utf-8');
 
-require_once __DIR__ . '/../baseDatos/conexionBaseDatos.php';
-require_once __DIR__ . '/../modelos/persona.php';
-require_once __DIR__ . '/../modelos/paciente.php';
-require_once __DIR__ . '/../modelos/empleado.php';
-require_once __DIR__ . '/../modelos/cita.php';
-require_once __DIR__ . '/../modelosDAO/personaDAO.php';
-require_once __DIR__ . '/../modelosDAO/pacienteDAO.php';
-require_once __DIR__ . '/../modelosDAO/empleadoDAO.php';
-require_once __DIR__ . '/../modelosDAO/citaDAO.php';
-require_once __DIR__ . '/../validaciones/validacionesPersona.php';
-
-$u = requerirSesionApi(['paciente', 'personal']);
-
-$db = BaseDatosFactory::conexion();
+$u   = requerirSesionApi(['paciente', 'personal']);
+$db  = BaseDatosFactory::conexion();
 $pdo = $db->getConexion();
 
 // ---------------------------------------------------------------------------
@@ -53,7 +38,7 @@ function camposFaltantes(array $datos, array $requeridos): array
 }
 
 /** Responde 422 si falta algún campo obligatorio. */
-function exigir(conexionBaseDatos $db, array $datos, array $requeridos): void
+function exigir(ConexionInterface $db, array $datos, array $requeridos): void
 {
     $faltan = camposFaltantes($datos, $requeridos);
     if ($faltan) {
@@ -149,7 +134,7 @@ try {
             );
 
             $idPersona = BaseDatosFactory::persona($pdo)->insertarRetornandoId($persona);
-$db->responder(201, ['ok' => true, 'mensaje' => 'Persona registrada.', 'idPersona' => $idPersona]);
+            $db->responder(201, ['ok' => true, 'mensaje' => 'Persona registrada.', 'idPersona' => $idPersona]);
             break;
 
         // ---- Paciente (persona existente, sin usuario) ---------------------
@@ -163,7 +148,7 @@ $db->responder(201, ['ok' => true, 'mensaje' => 'Persona registrada.', 'idPerson
                 $datos['alergias'] ?? null
             );
 
-            (new PacienteDAO($pdo))->insertar($paciente);
+            BaseDatosFactory::paciente($pdo)->insertar($paciente);
 
             $db->responder(201, ['ok' => true, 'mensaje' => 'Paciente registrado.']);
             break;
@@ -179,7 +164,7 @@ $db->responder(201, ['ok' => true, 'mensaje' => 'Persona registrada.', 'idPerson
                 $datos['alergias'] ?? null
             );
 
-            (new PacienteDAO($pdo))->crearConPersonaExistente(
+            BaseDatosFactory::paciente($pdo)->crearConPersonaExistente(
                 $paciente,
                 $datos['user'],
                 $datos['password']
@@ -209,7 +194,7 @@ $db->responder(201, ['ok' => true, 'mensaje' => 'Persona registrada.', 'idPerson
                 $datos['alergias'] ?? null
             );
 
-            (new PacienteDAO($pdo))->crearConTransaccion(
+            BaseDatosFactory::paciente($pdo)->crearConTransaccion(
                 $datos['nombres'],
                 $datos['primer_apellido'],
                 $datos['segundo_apellido'] ?? null,
@@ -238,7 +223,7 @@ $db->responder(201, ['ok' => true, 'mensaje' => 'Persona registrada.', 'idPerson
                 $datos['salario']
             );
 
-            (new EmpleadoDAO($pdo))->insertar($empleado);
+            BaseDatosFactory::empleado($pdo)->insertar($empleado);
 
             $db->responder(201, ['ok' => true, 'mensaje' => 'Empleado registrado.']);
             break;
@@ -254,7 +239,7 @@ $db->responder(201, ['ok' => true, 'mensaje' => 'Persona registrada.', 'idPerson
                 $datos['salario']
             );
 
-            (new EmpleadoDAO($pdo))->crearConPersonaExistente(
+            BaseDatosFactory::empleado($pdo)->crearConPersonaExistente(
                 $empleado,
                 $datos['user'],
                 $datos['password']
@@ -285,7 +270,7 @@ $db->responder(201, ['ok' => true, 'mensaje' => 'Persona registrada.', 'idPerson
                 $datos['salario']
             );
 
-            (new EmpleadoDAO($pdo))->crearConTransaccion(
+            BaseDatosFactory::empleado($pdo)->crearConTransaccion(
                 $datos['nombres'],
                 $datos['primer_apellido'],
                 $datos['segundo_apellido'] ?? null,
@@ -318,7 +303,7 @@ $db->responder(201, ['ok' => true, 'mensaje' => 'Persona registrada.', 'idPerson
                 (int) $datos['doctor_id']
             );
 
-            $idCita = (new CitaDAO($pdo))->guardarSinChoque($cita);
+            $idCita = BaseDatosFactory::cita($pdo)->guardarSinChoque($cita);
             if ($idCita === null) {
                 $db->responder(409, ['ok' => false, 'error' => 'Ese médico ya tiene una cita en ese horario.']);
             }
@@ -349,21 +334,17 @@ $db->responder(201, ['ok' => true, 'mensaje' => 'Persona registrada.', 'idPerson
     }
 
 } catch (PDOException $e) {
-    // Código de error de MySQL (1062 = duplicado, 1452 = llave foránea, etc.)
-    $codigoMySQL = $e->errorInfo[1] ?? 0;
-    $sqlState = $e->errorInfo[0] ?? '';
-
-    if ($sqlState === '45000') {
-        // Error lanzado con SIGNAL dentro del procedimiento almacenado
-        $db->responder(404, ['ok' => false, 'error' => $e->errorInfo[2] ?? $e->getMessage()]);
-    } elseif ($codigoMySQL === 1062) {
-        $db->responder(409, ['ok' => false, 'error' => 'Registro duplicado (num_seguro, usuario o la persona ya tiene ese rol).', 'detalle' => $e->getMessage()]);
-    } elseif ($codigoMySQL === 1452) {
-        $db->responder(422, ['ok' => false, 'error' => 'Llave foránea inválida: el paciente, doctor o persona indicado no existe.', 'detalle' => $e->getMessage()]);
-    } else {
-        $db->responder(500, ['ok' => false, 'error' => 'Error de base de datos.', 'detalle' => $e->getMessage()]);
+    $t = BaseDatosFactory::tipoError($e);
+    if ($t === 'regla') {
+        $db->responder(404, ['ok' => false, 'error' => BaseDatosFactory::mensajeError($e)]);
+    } elseif ($t === 'duplicado') {
+        $db->responder(409, ['ok' => false, 'error' => 'Registro duplicado (num_seguro, usuario o la persona ya tiene ese rol).']);
+    } elseif ($t === 'fk') {
+        $db->responder(422, ['ok' => false, 'error' => 'Llave foránea inválida: el paciente, doctor o persona indicado no existe.']);
+    } elseif ($t === 'formato') {
+        $db->responder(422, ['ok' => false, 'error' => 'Formato de dato inválido.']);
     }
-
+    $db->responder(500, ['ok' => false, 'error' => 'Error de base de datos.', 'detalle' => $e->getMessage()]);
 } catch (Throwable $e) {
     $db->responder(500, ['ok' => false, 'error' => 'Error interno.', 'detalle' => $e->getMessage()]);
 }

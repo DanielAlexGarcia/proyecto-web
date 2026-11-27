@@ -1,11 +1,17 @@
 <?php
 require_once __DIR__ . '/../auth/autenticacion.php';
-$u = requerirSesionApi(['personal']);
+require_once __DIR__ . '/../baseDatos/BaseDatosFactory.php';
+require_once __DIR__ . '/../validacionesCita.php';
+require_once __DIR__ . '/../validaciones/validacionesPersona.php';
+
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+error_reporting(E_ALL);
 header('Content-Type: application/json; charset=utf-8');
 
-require_once __DIR__ . '/../baseDatos/BaseDatosFactory.php';
-$cons     = BaseDatosFactory::conexion();   // también carga los modelos
-$conexion = $cons->getConexion();
+$u = requerirSesionApi(['paciente', 'personal']);
+$db = BaseDatosFactory::conexion();
+$pdo = $db->getConexion();
 
 $metodo = $_SERVER['REQUEST_METHOD'];
 $esAdmin = mb_strtolower(trim($u['cargo'] ?? ''), 'UTF-8') === 'administrador';
@@ -148,7 +154,7 @@ $estructuraDatos = [
 ];
 
 if ($metodo === 'GET') {
-    
+
     $datos = $cons->leerJSON();
 
     if (!$datos) {
@@ -234,7 +240,10 @@ if ($metodo === 'GET') {
                 ?? $datos['fecha_hora_consulta']
                 ?? date('Y-m-d H:i:s');
 
-            $stmt = $conexion->prepare("SELECT fn_citas_proximas(:paciente_id, :fecha_hora) AS resultado");
+            $stmt = $conexion->prepare(
+                "SELECT fn_citas_proximas(" . BaseDatosFactory::tipado(':paciente_id', 'int') . ", "
+                . BaseDatosFactory::tipado(':fecha_hora', 'fecha') . ") AS resultado"
+            );
             $stmt->execute([
                 ':paciente_id' => $pacienteId,
                 ':fecha_hora' => trim((string) $fechaHora)
@@ -258,7 +267,10 @@ if ($metodo === 'GET') {
             $rol = ($rol !== null && trim((string) $rol) !== '') ? trim((string) $rol) : null;
             $especialidad = ($especialidad !== null && trim((string) $especialidad) !== '') ? trim((string) $especialidad) : null;
 
-            $stmt = $conexion->prepare("SELECT fn_consultar_empleados(:rol, :especialidad) AS resultado");
+            $stmt = $conexion->prepare(
+                "SELECT fn_consultar_empleados(" . BaseDatosFactory::tipado(':rol', 'texto') . ", "
+                . BaseDatosFactory::tipado(':especialidad', 'texto') . ") AS resultado"
+            );
             $stmt->execute([
                 ':rol' => $rol,
                 ':especialidad' => $especialidad
@@ -286,7 +298,7 @@ if ($metodo === 'GET') {
 
             switch ($tipoEntidad) {
                 case 0: // Persona
-                    $dao = new PersonaDAO($conexion);
+                    $dao = BaseDatosFactory::persona($conexion);
                     $obj = $dao->obtenerPorId($id);
                     if ($obj) {
                         $resultado = [
@@ -302,7 +314,7 @@ if ($metodo === 'GET') {
                     break;
 
                 case 1: // Empleado
-                    $dao = new EmpleadoDAO($conexion);
+                    $dao =BaseDatosFactory::empleado($conexion);
                     $obj = $dao->obtenerPorId($id);
                     if ($obj) {
                         $resultado = [
@@ -315,7 +327,7 @@ if ($metodo === 'GET') {
                     break;
 
                 case 2: // Paciente
-                    $dao = new PacienteDAO($conexion);
+                    $dao = BaseDatosFactory::paciente($conexion);
                     $obj = $dao->obtenerPorId($id);
                     if ($obj) {
                         $resultado = [
@@ -328,7 +340,7 @@ if ($metodo === 'GET') {
                     break;
 
                 case 3: // Cita
-                    $dao = new CitaDAO($conexion);
+                    $dao =BaseDatosFactory::cita($conexion);
                     $obj = $dao->obtenerPorId($id);
                     if ($obj) {
                         $resultado = [
@@ -396,9 +408,9 @@ if ($metodo === 'GET') {
                       INNER JOIN personas p ON pa.id_persona = p.id",
                 3 => "SELECT c.id, c.fecha_hora, c.motivo, c.estado,
                              c.paciente_id,
-                             CONCAT(pp.nombres, ' ', pp.primer_apellido, ' ', IFNULL(pp.segundo_apellido, '')) AS nombre_paciente,
+                             CONCAT(pp.nombres, ' ', pp.primer_apellido, ' ', COALESCE(pp.segundo_apellido, '')) AS nombre_paciente,
                              c.doctor_id,
-                             CONCAT(pd.nombres, ' ', pd.primer_apellido, ' ', IFNULL(pd.segundo_apellido, '')) AS nombre_doctor
+                             CONCAT(pd.nombres, ' ', pd.primer_apellido, ' ', COALESCE(pd.segundo_apellido, '')) AS nombre_doctor
                       FROM citas c
                       INNER JOIN personas pp ON c.paciente_id = pp.id
                       INNER JOIN personas pd ON c.doctor_id = pd.id",
@@ -419,10 +431,11 @@ if ($metodo === 'GET') {
             ];
 
             $esNumerico = is_numeric($valor) && in_array($filtro, $camposNumericos, true);
-            $operador = $esNumerico ? '=' : 'LIKE';
+            $operador = $esNumerico ? '=' : BaseDatosFactory::like();
             $parametroValor = $esNumerico ? $valor : "%$valor%";
+            $columnaWhere = $esNumerico ? $columnaSQL : BaseDatosFactory::texto($columnaSQL);
 
-            $sql = $consultasBase[$tipoEntidad] . " WHERE $columnaSQL $operador :valor";
+            $sql = $consultasBase[$tipoEntidad] . " WHERE $columnaWhere $operador :valor";
             $stmt = $conexion->prepare($sql);
             $stmt->execute([':valor' => $parametroValor]);
 
@@ -434,19 +447,19 @@ if ($metodo === 'GET') {
         $lista = [];
         switch ($tipoEntidad) {
             case 0:
-                $dao = new PersonaDAO($conexion);
+                $dao = BaseDatosFactory::persona($conexion);
                 $lista = $dao->obtenerTodos();
                 break;
             case 1:
-                $dao = new EmpleadoDAO($conexion);
+                $dao = BaseDatosFactory::empleado($conexion);
                 $lista = $dao->obtenerTodos();
                 break;
             case 2:
-                $dao = new PacienteDAO($conexion);
+                $dao = BaseDatosFactory::paciente($conexion);
                 $lista = $dao->obtenerTodos();
                 break;
             case 3:
-                $dao = new CitaDAO($conexion);
+                $dao = BaseDatosFactory::cita($conexion);
                 $lista = $dao->obtenerTodos();
                 break;
             case 4:

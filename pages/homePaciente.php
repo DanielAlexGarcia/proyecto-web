@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../php/auth/autenticacion.php';
 $u = requerirSesionPagina('paciente', 'login');
 
-require_once __DIR__ . '/../php/baseDatos/conexionBaseDatos.php';
+require_once __DIR__ . '/../php/baseDatos/BaseDatosFactory.php';
 require_once __DIR__ . '/../php/validacionesCita.php';
 
 $pacienteId = (int) $u['paciente_id'];
@@ -18,8 +18,7 @@ $citasPaciente = [];
 $errorCarga = '';
 
 try {
-    $db = conexionBaseDatos::getInstancia();
-    $pdo = $db->getConexion();
+    $pdo = BaseDatosFactory::pdo();
 
     $listaDoctores = $pdo->query(
         "SELECT p.id AS doctor_id,
