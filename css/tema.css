@@ -1,0 +1,85 @@
+/* css/tema.css — modo oscuro. El modo claro es el que ya existe (sin cambios). */
+
+/* ---------- Variables (styles.css y panel del personal) ---------- */
+html[data-tema="oscuro"] {
+  --bg: #0f172a;  --t: #e2e8f0;  --m: #94a3b8;  --l: #334155;  --w: #1e293b;
+  --card: #1e293b; --text: #e2e8f0; --muted: #94a3b8; --border: #334155;
+}
+
+html[data-tema="oscuro"] body { background: #0f172a; color: #e2e8f0; }
+
+/* ---------- Formularios (todas las páginas) ---------- */
+html[data-tema="oscuro"] input,
+html[data-tema="oscuro"] select,
+html[data-tema="oscuro"] textarea {
+  background: #0f172a; color: #e2e8f0; border-color: #475569;
+}
+html[data-tema="oscuro"] ::placeholder { color: #64748b; }
+html[data-tema="oscuro"] label { color: #cbd5e1; }
+
+/* ---------- Páginas con styles.css (login, cambiarClaves, restablecerClaves) ---------- */
+html[data-tema="oscuro"] .auth a:not(.btn) { color: #5eead4; }
+html[data-tema="oscuro"] .logo { color: #e2e8f0; }
+html[data-tema="oscuro"] .logo span { color: #5eead4; }
+html[data-tema="oscuro"] .tabs button[aria-pressed="true"] { background: #334155; color: #5eead4; }
+html[data-tema="oscuro"] .btn.o { color: #5eead4; border-color: #5eead4; }
+html[data-tema="oscuro"] .btn.o:hover { background: #0f766e; color: #fff; }
+
+/* ---------- Panel del personal ---------- */
+html[data-tema="oscuro"] .card h3 { color: #e2e8f0; }
+html[data-tema="oscuro"] th { background: #0f172a; color: #cbd5e1; }
+html[data-tema="oscuro"] tr:hover { background: #0f172a; }
+html[data-tema="oscuro"] .modal { background: #1e293b; color: #e2e8f0; }
+html[data-tema="oscuro"] .close-btn { color: #94a3b8; }
+html[data-tema="oscuro"] .alert.success { background: #052e16; color: #86efac; border-color: #166534; }
+html[data-tema="oscuro"] .alert.error { background: #450a0a; color: #fca5a5; border-color: #991b1b; }
+html[data-tema="oscuro"] .badge { background: #0c4a6e; color: #bae6fd; }
+html[data-tema="oscuro"] .badge.alta { background: #14532d; color: #bbf7d0; }
+html[data-tema="oscuro"] .badge.cambio { background: #713f12; color: #fde68a; }
+html[data-tema="oscuro"] .badge.baja { background: #7f1d1d; color: #fecaca; }
+
+/* ---------- Portal del paciente (clases de Tailwind) ---------- */
+html[data-tema="oscuro"] .bg-white { background-color: #1e293b; }
+html[data-tema="oscuro"] .bg-white\/95 { background-color: rgba(30, 41, 59, .95); }
+html[data-tema="oscuro"] .bg-white\/80 { background-color: rgba(30, 41, 59, .8); }
+html[data-tema="oscuro"] .bg-slate-50 { background-color: #0f172a; }
+html[data-tema="oscuro"] .bg-slate-100 { background-color: #334155; }
+html[data-tema="oscuro"] .hover\:bg-slate-50:hover,
+html[data-tema="oscuro"] .hover\:bg-slate-100:hover { background-color: #334155; }
+html[data-tema="oscuro"] .bg-sky-50 { background-color: rgba(2, 132, 199, .15); }
+html[data-tema="oscuro"] .bg-sky-100,
+html[data-tema="oscuro"] .hover\:bg-sky-100:hover { background-color: rgba(2, 132, 199, .28); }
+html[data-tema="oscuro"] .bg-amber-50 { background-color: rgba(245, 158, 11, .15); }
+html[data-tema="oscuro"] .bg-emerald-50 { background-color: rgba(16, 185, 129, .15); }
+html[data-tema="oscuro"] .bg-rose-50,
+html[data-tema="oscuro"] .hover\:bg-rose-50:hover,
+html[data-tema="oscuro"] .hover\:bg-rose-50\/70:hover,
+html[data-tema="oscuro"] .hover\:bg-rose-100:hover { background-color: rgba(244, 63, 94, .16); }
+
+html[data-tema="oscuro"] .text-slate-900,
+html[data-tema="oscuro"] .text-slate-800 { color: #f1f5f9; }
+html[data-tema="oscuro"] .text-slate-700,
+html[data-tema="oscuro"] .text-slate-600 { color: #cbd5e1; }
+html[data-tema="oscuro"] .text-slate-500,
+html[data-tema="oscuro"] .text-slate-400 { color: #94a3b8; }
+html[data-tema="oscuro"] .text-\[\#0284c7\] { color: #38bdf8; }
+html[data-tema="oscuro"] .text-amber-700 { color: #fcd34d; }
+html[data-tema="oscuro"] .text-emerald-700 { color: #6ee7b7; }
+html[data-tema="oscuro"] .text-rose-600,
+html[data-tema="oscuro"] .text-rose-700 { color: #fda4af; }
+
+html[data-tema="oscuro"] .border-slate-100,
+html[data-tema="oscuro"] .border-slate-200,
+html[data-tema="oscuro"] .border-slate-200\/80,
+html[data-tema="oscuro"] .border-slate-200\/90,
+html[data-tema="oscuro"] .border-slate-300 { border-color: #334155; }
+html[data-tema="oscuro"] .border-sky-100,
+html[data-tema="oscuro"] .border-sky-200 { border-color: rgba(56, 189, 248, .3); }
+html[data-tema="oscuro"] .border-emerald-200,
+html[data-tema="oscuro"] .border-amber-200\/70,
+html[data-tema="oscuro"] .border-rose-200 { border-color: rgba(148, 163, 184, .3); }
+
+/* Hero con degradado claro */
+html[data-tema="oscuro"] .from-white {
+  background-image: linear-gradient(135deg, #1e293b, #0f2a3a) !important;
+}

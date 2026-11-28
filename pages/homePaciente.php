@@ -188,10 +188,18 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
             <button type="button" @click="mobileMenuOpen = false; openCancelModal();"
                 class="w-full px-4 py-3 rounded-xl text-sm font-medium text-rose-600 hover:bg-rose-50 text-left">Cancelar
                 cita</button>
+            <button type="button" @click="openConfigModal()"
+                class="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:text-[#0284c7] hover:bg-slate-50">⚙
+                Configuración</button>
+            <button type="button" @click="mobileMenuOpen = false; openConfigModal();"
+                class="w-full px-4 py-3 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 text-left">⚙
+                Configuración</button>
             <a href="close.php"
                 class="block px-4 py-3 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50">Cerrar
                 sesión</a>
         </div>
+        <link rel="stylesheet" href="css/tema.css">
+        <script src="JS/tema.js"></script>
     </header>
 
     <!-- ================= CONTENIDO ================= -->
@@ -529,6 +537,40 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
         </div>
     </div>
 
+    <div id="modal-config" x-show="modals.config" x-cloak
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl max-w-md w-full shadow-2xl overflow-hidden animate-modal">
+            <div class="px-6 py-5 bg-slate-800 text-white flex items-center justify-between">
+                <h3 class="text-lg font-bold">Configuración</h3>
+                <button type="button" @click="closeModal('config')" class="p-2 rounded-xl hover:bg-white/15">✕</button>
+            </div>
+            <div class="p-6 space-y-6">
+                <div>
+                    <h4 class="text-xs font-semibold text-slate-700 uppercase mb-2">Apariencia</h4>
+                    <div class="inline-flex p-1 rounded-xl bg-slate-100">
+                        <button type="button" @click="setTema('claro')"
+                            :class="tema === 'claro' ? 'bg-[#0284c7] text-white' : 'text-slate-600'"
+                            class="px-4 py-2 rounded-lg text-sm font-semibold">☀ Claro</button>
+                        <button type="button" @click="setTema('oscuro')"
+                            :class="tema === 'oscuro' ? 'bg-[#0284c7] text-white' : 'text-slate-600'"
+                            class="px-4 py-2 rounded-lg text-sm font-semibold">🌙 Oscuro</button>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-xs font-semibold text-slate-700 uppercase mb-2">Seguridad</h4>
+                    <div class="flex flex-col gap-2">
+                        <a href="cambiarClaves?seccion=password"
+                            class="px-4 py-2.5 rounded-xl text-sm font-semibold text-[#0284c7] bg-sky-50 hover:bg-sky-100">Cambiar
+                            contraseña</a>
+                        <a href="cambiarClaves?seccion=pin"
+                            class="px-4 py-2.5 rounded-xl text-sm font-semibold text-[#0284c7] bg-sky-50 hover:bg-sky-100">Cambiar
+                            o crear NIP</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- TOASTS -->
     <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 max-w-sm w-full pointer-events-none">
         <template x-for="t in toasts" :key="t.id">
@@ -567,9 +609,12 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
                 currentStatusFilter: 'Todas',
                 currentDateDisplay: '',
                 mobileMenuOpen: false,
-                modals: { schedule: false, modify: false, cancel: false },
+                modals: { schedule: false, modify: false, cancel: false, config: false },
+                tema: Tema.get(),
                 toasts: [],
 
+                openConfigModal() { this.tema = Tema.get(); this.modals.config = true; },
+                setTema(t) { this.tema = Tema.set(t); },
                 schedForm: { doctor_id: '', date: '', minDate: '', time: '08:30:00', reason: '' },
                 modForm: { id: '', doctor_id: '', date: '', time: '08:30:00', reason: '' },
                 cancelForm: { id: '' },

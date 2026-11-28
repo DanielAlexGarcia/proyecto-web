@@ -597,6 +597,8 @@ $jsonAttr = JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG | JSON_U
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
     <script src="JS/popperValidacion.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="css/tema.css">
+    <script src="JS/tema.js"></script>
 </head>
 
 <body x-data="panelPersonal()">
@@ -607,6 +609,8 @@ $jsonAttr = JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG | JSON_U
             <strong><?= htmlspecialchars($empleadoActual['nombre_completo']) ?></strong> |
             Cargo: <?= htmlspecialchars($empleadoActual['cargo']) ?>
             (<?= htmlspecialchars($empleadoActual['especializacion'] ?: 'General') ?>)
+            <button type="button" class="btn-logout" style="background:#475569;border:none;cursor:pointer"
+                @click="abrirConfig()">⚙ Configuración</button></a>
             <a href="close.php" class="btn-logout">Cerrar sesión</a>
         </div>
     </header>
@@ -998,6 +1002,27 @@ $jsonAttr = JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG | JSON_U
         </div>
     </div>
 
+    <div id="modal-config" class="modal-backdrop" :class="{ open: modalConfigOpen }">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 style="margin:0;">Configuración</h3>
+                <button type="button" class="close-btn" @click="modalConfigOpen = false">&times;</button>
+            </div>
+            <h4 style="margin:.2rem 0 .5rem">Apariencia</h4>
+            <div style="display:flex;gap:.5rem;margin-bottom:1.25rem">
+                <button type="button" class="btn" :style="tema === 'claro' ? '' : 'background:#64748b'"
+                    @click="setTema('claro')">☀ Claro</button>
+                <button type="button" class="btn" :style="tema === 'oscuro' ? '' : 'background:#64748b'"
+                    @click="setTema('oscuro')">🌙 Oscuro</button>
+            </div>
+            <h4 style="margin:.2rem 0 .5rem">Seguridad</h4>
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+                <a class="btn" style="text-decoration:none" href="cambiarClaves?seccion=password">Cambiar contraseña</a>
+                <a class="btn" style="text-decoration:none" href="cambiarClaves?seccion=pin">Cambiar o crear NIP</a>
+            </div>
+        </div>
+    </div>
+
     <!-- ===================== MODAL: EDITAR CITA ===================== -->
     <div id="modal-cita" class="modal-backdrop" :class="{ open: modalCitaOpen }">
         <div class="modal">
@@ -1061,6 +1086,10 @@ $jsonAttr = JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG | JSON_U
                 empleados: <?= json_encode($empleados, $jsonAttr) ?>,
                 registrosAuditoria: <?= json_encode($registrosAuditoria, $jsonAttr) ?>,
 
+                modalConfigOpen: false,
+                tema: Tema.get(),
+                abrirConfig() { this.tema = Tema.get(); this.modalConfigOpen = true; },
+                setTema(t) { this.tema = Tema.set(t); },
                 resultadoFuncionCitas: <?= json_encode($resultadoFuncionCitas, $jsonAttr) ?>,
                 resultadoFuncionEmpleados: <?= json_encode($resultadoFuncionEmpleados, $jsonAttr) ?>,
 

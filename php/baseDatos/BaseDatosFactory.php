@@ -15,7 +15,9 @@ final class BaseDatosFactory
 
     private static ?string $driver = null;
 
-    private function __construct() {}
+    private function __construct()
+    {
+    }
 
     // ------------------------------------------------------------------
     // Motor activo
@@ -135,6 +137,12 @@ final class BaseDatosFactory
         }
         require_once __DIR__ . '/../modelosDAO/UsuarioDAO.php';
         return new UsuarioDAOMySQL($pdo);
+    }
+    public static function confUser(?PDO $pdo = null): ConfUserInterface
+    {
+        $pdo ??= self::pdo();
+        require_once __DIR__ . '/../modelosDAO/ConfUserDAO.php';
+        return new ConfUserDAO($pdo);
     }
 
     // ------------------------------------------------------------------

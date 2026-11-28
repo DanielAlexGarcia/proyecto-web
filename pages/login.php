@@ -233,7 +233,7 @@ $captchaImg = generarCaptcha();
                     placeholder="Escribe los 5 caracteres" style="text-transform: uppercase;">
 
                 <div class="opt">
-                    <a href="#">¿Olvidaste tu contraseña?</a>
+                    <a href="restablecerClaves">¿Olvidaste tu contraseña o NIP?</a>
                 </div>
 
                 <button class="btn" type="submit">Entrar</button>
