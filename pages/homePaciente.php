@@ -23,7 +23,7 @@ try {
     $listaDoctores = $pdo->query(
         "SELECT p.id AS doctor_id,
                 TRIM(CONCAT_WS(' ', p.nombres, p.primer_apellido, p.segundo_apellido)) AS nombre_doctor,
-                IFNULL(e.especializacion, e.cargo) AS especialidad
+                COALESCE(e.especializacion, e.cargo) AS especialidad
          FROM empleados e
          INNER JOIN personas p ON e.id_persona = p.id
          WHERE LOWER(e.cargo) LIKE '%doctor%' OR LOWER(e.cargo) LIKE '%medic%'
@@ -38,7 +38,7 @@ try {
     $stmt = $pdo->prepare(
         "SELECT c.id, c.fecha_hora, c.motivo, c.estado, c.paciente_id, c.doctor_id,
                 TRIM(CONCAT_WS(' ', pd.nombres, pd.primer_apellido, pd.segundo_apellido)) AS nombre_doctor,
-                IFNULL(e.especializacion, e.cargo) AS especialidad
+                COALESCE(e.especializacion, e.cargo) AS especialidad
          FROM citas c
          INNER JOIN empleados e ON c.doctor_id = e.id_persona
          INNER JOIN personas pd ON pd.id = e.id_persona

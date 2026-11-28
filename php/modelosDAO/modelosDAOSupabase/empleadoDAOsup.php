@@ -18,10 +18,10 @@ class EmpleadoDAOSupabase implements EmpleadoDAOInterface
              VALUES (:idPersona, :cargo, :especializacion, :salario)"
         );
         return $stmt->execute([
-            ':idPersona'       => $empleado->getIDPersona(),
-            ':cargo'           => $empleado->getCargo(),
+            ':idPersona' => $empleado->getIDPersona(),
+            ':cargo' => $empleado->getCargo(),
             ':especializacion' => $empleado->getEspecializacion(),
-            ':salario'         => $empleado->getSalario()
+            ':salario' => $empleado->getSalario()
         ]);
     }
 
@@ -47,8 +47,8 @@ class EmpleadoDAOSupabase implements EmpleadoDAOInterface
                  LIMIT 1"
             );
             $stmtBuscar->execute([
-                ':nombres'          => trim($nombres),
-                ':primer_apellido'  => trim($primerApellido),
+                ':nombres' => trim($nombres),
+                ':primer_apellido' => trim($primerApellido),
                 ':segundo_apellido' => $segundoApellido !== null ? trim($segundoApellido) : null,
                 ':fecha_nacimiento' => $fechaNacimiento
             ]);
@@ -61,12 +61,12 @@ class EmpleadoDAOSupabase implements EmpleadoDAOInterface
                      RETURNING id"
                 );
                 $stmtPersona->execute([
-                    ':nombres'          => trim($nombres),
-                    ':primer_apellido'  => trim($primerApellido),
+                    ':nombres' => trim($nombres),
+                    ':primer_apellido' => trim($primerApellido),
                     ':segundo_apellido' => $segundoApellido !== null ? trim($segundoApellido) : null,
                     ':fecha_nacimiento' => $fechaNacimiento,
-                    ':genero'           => $genero,
-                    ':direccion'        => $direccion
+                    ':genero' => $genero,
+                    ':direccion' => $direccion
                 ]);
                 $idPersona = (int) $stmtPersona->fetchColumn();
             } else {
@@ -77,19 +77,19 @@ class EmpleadoDAOSupabase implements EmpleadoDAOInterface
                 "INSERT INTO empleados (id_persona, cargo, especializacion, salario)
                  VALUES (:id_persona, :cargo, :especializacion, :salario)"
             )->execute([
-                ':id_persona'      => $idPersona,
-                ':cargo'           => $empleado->getCargo(),
-                ':especializacion' => $empleado->getEspecializacion(),
-                ':salario'         => $empleado->getSalario()
-            ]);
+                        ':id_persona' => $idPersona,
+                        ':cargo' => $empleado->getCargo(),
+                        ':especializacion' => $empleado->getEspecializacion(),
+                        ':salario' => $empleado->getSalario()
+                    ]);
 
             $this->conexion->prepare(
                 'INSERT INTO usuarios ("user", password, iddocpac) VALUES (:user, :password, :idDocPac)'
             )->execute([
-                ':user'     => sha1(trim($user)),
-                ':password' => sha1($password),
-                ':idDocPac' => $idPersona
-            ]);
+                        ':user' => trim($user),
+                        ':password' => $password,
+                        ':idDocPac' => $idPersona
+                    ]);
 
             $this->conexion->commit();
             return true;
@@ -110,12 +110,12 @@ class EmpleadoDAOSupabase implements EmpleadoDAOInterface
                 CAST(:salario AS NUMERIC), CAST(:user AS VARCHAR), CAST(:password AS VARCHAR))"
         );
         $resultado = $stmt->execute([
-            ':idPersona'       => $empleado->getIDPersona(),
-            ':cargo'           => $empleado->getCargo(),
+            ':idPersona' => $empleado->getIDPersona(),
+            ':cargo' => $empleado->getCargo(),
             ':especializacion' => $empleado->getEspecializacion(),
-            ':salario'         => $empleado->getSalario(),
-            ':user'            => sha1(trim($user)),
-            ':password'        => sha1($password)
+            ':salario' => $empleado->getSalario(),
+            ':user' => trim($user),
+            ':password' => $password
         ]);
         $stmt->closeCursor();
         return $resultado;
@@ -134,10 +134,10 @@ class EmpleadoDAOSupabase implements EmpleadoDAOInterface
              WHERE id_persona = :idPersona"
         );
         return $stmt->execute([
-            ':cargo'           => $empleado->getCargo(),
+            ':cargo' => $empleado->getCargo(),
             ':especializacion' => $empleado->getEspecializacion(),
-            ':salario'         => $empleado->getSalario(),
-            ':idPersona'       => $empleado->getIDPersona()
+            ':salario' => $empleado->getSalario(),
+            ':idPersona' => $empleado->getIDPersona()
         ]);
     }
 

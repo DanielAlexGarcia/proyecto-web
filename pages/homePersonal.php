@@ -239,18 +239,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         // 6. Función almacenada fn_citas_proximas
         elseif ($accion === 'consultar_fn_citas') {
-            $stmt = $pdo->prepare("SELECT fn_citas_proximas("
-                . BaseDatosFactory::tipado(':pac', 'int') . ", "
-                . BaseDatosFactory::tipado(':fecha', 'fecha') . ") AS resultado");
-
+            $stmt->execute([':pac' => (int) post('paciente_id'), ':fecha' => fechaSQL(post('fecha_consulta'))]);
             $resultadoFuncionCitas = (string) $stmt->fetchColumn();
         }
 
         // 7. Función almacenada fn_consultar_empleados
         elseif ($accion === 'consultar_fn_empleados') {
-            $stmt = $pdo->prepare("SELECT fn_consultar_empleados("
-                . BaseDatosFactory::tipado(':rol', 'texto') . ", "
-                . BaseDatosFactory::tipado(':esp', 'texto') . ") AS resultado");
+            $stmt->execute([':rol' => postNull('rol'), ':esp' => postNull('especialidad')]);
             $resultadoFuncionEmpleados = (string) $stmt->fetchColumn();
         }
 

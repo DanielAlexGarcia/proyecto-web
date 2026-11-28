@@ -1,101 +1,66 @@
 <?php
+require_once __DIR__ . '/../php/baseDatos/BaseDatosFactory.php';
+require_once __DIR__ . '/../php/validaciones/validacionesPersona.php';
 
-
-require_once __DIR__ . '/../php/baseDatos/conexionBaseDatos.php';
-require_once __DIR__ . '/../php/modelos/persona.php';
-require_once __DIR__ . '/../php/modelosDAO/personaDAO.php';
-
-function newPaciente($names, $APS, $fechaNac, $tel, $direction, $correo, $User, $pass)
-{
-  $db = new conexionBaseDatos();
-  $conexion = $db->getConexion();
-
-  // Separar apellidos en primer y segundo apellido para el modelo persona
-  $partesApellidos = explode(' ', trim($APS), 2);
-  $primerApellido = $partesApellidos[0] ?? '';
-  $segundoApellido = $partesApellidos[1] ?? '';
-
-  try {
-    $conexion->beginTransaction();
-
-    // 1. Dar de alta a la Persona usando PersonaDAO
-    $nuevaPersona = new persona(
-      trim($names),
-      $primerApellido,
-      $segundoApellido,
-      $fechaNac,
-      "M",
-      trim($direction)
-    );
-
-    $personaDAO = new PersonaDAO($conexion);
-    if (!$personaDAO->insertar($nuevaPersona)) {
-      throw new Exception('No se pudo registrar la persona.');
-    }
-
-    $idPersona = (int) $conexion->lastInsertId();
-
-    // 2. Dar de alta en la tabla users con user y password encriptados en SHA1
-    $sqlUser = "INSERT INTO users (user, password, name) VALUES (SHA1(:user), SHA1(:password), :name)";
-    $stmtUser = $conexion->prepare($sqlUser);
-
-    $nombreCompleto = trim($names . ' ' . $APS);
-
-    $exitoUser = $stmtUser->execute([
-      ':user' => sha1(trim($User)),
-      ':password' => sha1($pass),
-      ':name' => $nombreCompleto
-    ]);
-
-    if (!$exitoUser) {
-      throw new Exception('No se pudo crear el usuario.');
-    }
-
-    $conexion->commit();
-
-    return [
-      'ok' => true,
-      'idPersona' => $idPersona,
-      'mensaje' => 'Paciente y usuario registrados correctamente.'
-    ];
-
-  } catch (Exception $e) {
-    if ($conexion->inTransaction()) {
-      $conexion->rollBack();
-    }
-    return [
-      'ok' => false,
-      'error' => $e->getMessage()
-    ];
-  }
-}
-
-// Procesar la petición POST enviada desde el formulario vía fetch()
+// Alta de paciente (POST JSON enviado con fetch desde este mismo formulario)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  header('Content-Type: application/json; charset=utf-8');
-  $db = new conexionBaseDatos();
-  $datos = $db->leerJSON();
+    header('Content-Type: application/json; charset=utf-8');
+    $db = BaseDatosFactory::conexion(); // también carga los modelos
+    $d  = $db->leerJSON();
 
-  if (!$datos) {
-    $db->responder(400, ['error' => 'Datos JSON inválidos o vacíos.']);
-  }
+    if (!$d) {
+        $db->responder(400, ['error' => 'Datos JSON inválidos o vacíos.']);
+    }
 
-  $resultado = newPaciente(
-    $datos['names'] ?? '',
-    $datos['APS'] ?? '',
-    $datos['fechaNac'] ?? '',
-    $datos['tel'] ?? '',
-    $datos['direction'] ?? '',
-    $datos['correo'] ?? '',
-    $datos['User'] ?? ($datos['correo'] ?? ''),
-    $datos['pass'] ?? ''
-  );
+    try {
+        $nombres  = trim((string) ($d['names'] ?? ''));
+        $partes   = explode(' ', trim((string) ($d['APS'] ?? '')), 2);
+        $apellido1 = $partes[0] ?? '';
+        $apellido2 = (isset($partes[1]) && trim($partes[1]) !== '') ? trim($partes[1]) : null;
+        $fechaNac = (string) ($d['fechaNac'] ?? '');
+        $direccion = trim((string) ($d['direction'] ?? ''));
+        $correo   = trim((string) ($d['correo'] ?? ''));
+        $pass     = (string) ($d['pass'] ?? '');
 
-  if ($resultado['ok']) {
-    $db->responder(201, $resultado);
-  } else {
-    $db->responder(500, ['error' => $resultado['error']]);
-  }
+        // num_seguro es NOT NULL + UNIQUE: si no hay cobertura, se genera un folio interno
+        $numSeguro = trim((string) ($d['numSeguro'] ?? ''));
+        if ($numSeguro === '') {
+            $numSeguro = 'PAC-' . strtoupper(bin2hex(random_bytes(5)));
+        }
+
+        if (!filter_var($correo, FILTER_VALIDATE_EMAIL)) {
+            throw new InvalidArgumentException('El correo electrónico no es válido.');
+        }
+
+        ValidadorPersonas::persona([
+            'nombres' => $nombres, 'primer_apellido' => $apellido1, 'segundo_apellido' => $apellido2,
+            'fecha_nacimiento' => $fechaNac, 'genero' => '', 'direccion' => $direccion,
+        ]);
+        ValidadorPersonas::paciente(['num_seguro' => $numSeguro, 'grupo_sanguineo' => '', 'alergias' => '']);
+        ValidadorPersonas::credenciales(['user' => $correo, 'password' => $pass]);
+
+        $pdo = $db->getConexion();
+        BaseDatosFactory::paciente($pdo)->crearConTransaccion(
+            $nombres, $apellido1, $apellido2, $fechaNac, null, $direccion !== '' ? $direccion : null,
+            new paciente(0, $numSeguro, null, null),
+            $correo,
+            $pass
+        );
+
+        $db->responder(201, ['ok' => true, 'mensaje' => 'Paciente y usuario registrados correctamente.']);
+
+    } catch (InvalidArgumentException $e) {
+        $db->responder(422, ['error' => $e->getMessage()]);
+    } catch (PDOException $e) {
+        error_log('[registro] ' . $e->getMessage());
+        if (BaseDatosFactory::tipoError($e) === 'duplicado') {
+            $db->responder(409, ['error' => 'Ya existe una cuenta o un paciente con esos datos (correo o número de seguro).']);
+        }
+        $db->responder(500, ['error' => 'No se pudo completar el registro.']);
+    } catch (Throwable $e) {
+        error_log('[registro] ' . $e->getMessage());
+        $db->responder(500, ['error' => 'Error interno al registrar.']);
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -107,13 +72,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <title>Registro de paciente | Clínica Bienestar</title>
   <link rel="stylesheet" href="css/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
-<script src="JS/popperValidacion.js"></script>
+  <script src="JS/popperValidacion.js"></script>
 </head>
 
 <body>
   <main class="auth">
     <div class="card w">
-      <a class="logo" href="../index.html">Clínica <span>Bienestar</span></a>
+      <a class="logo" href="index.html">Clínica <span>Bienestar</span></a>
       <h1>Crear cuenta de paciente</h1>
       <p class="s">Regístrate para agendar citas y consultar tu historial y saldos.</p>
 
@@ -186,74 +151,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   </main>
 
   <script>
-    const c = document.getElementById('c'),
-      b = document.getElementById('cob'),
-      l = document.getElementById('lnp');
+    const $ = id => document.getElementById(id);
+    const cobertura = $('c'), bloque = $('cob'), etiqueta = $('lnp');
 
-    c.onchange = () => {
-      const v = c.value;
-      b.style.display = (v === 'seguro' || v === 'estado') ? 'block' : 'none';
-      l.textContent = v === 'seguro' ? 'Número de póliza y aseguradora' : 'Número de tarjeta médica';
+    cobertura.onchange = () => {
+      const v = cobertura.value;
+      bloque.style.display = (v === 'seguro' || v === 'estado') ? 'block' : 'none';
+      etiqueta.textContent = v === 'seguro' ? 'Número de póliza y aseguradora' : 'Número de tarjeta médica';
     };
 
-    document.getElementById('f').onsubmit = async e => {
+    const form = $('f');
+
+    // La validación se activa UNA vez (captura el submit y detiene el envío si hay errores)
+    Validacion.activar(form, {
+      reglas: {
+        p2: v => v !== $('p1').value ? 'Las contraseñas no coinciden.' : null,
+        fn: v => v > new Date().toISOString().slice(0, 10) ? 'La fecha no puede ser futura.' : null
+      }
+    });
+
+    form.addEventListener('submit', async e => {
       e.preventDefault();
 
-      const names = document.getElementById('n').value.trim();
-      const APS = document.getElementById('a').value.trim();
-      const fechaNac = document.getElementById('fn').value;
-      const tel = document.getElementById('t').value.trim();
-      const direction = document.getElementById('d').value.trim();
-      const correo = document.getElementById('e').value.trim();
-      const p1 = document.getElementById('p1').value;
-      const p2 = document.getElementById('p2').value;
-      const priv = document.getElementById('priv').checked;
-
-      const f = document.getElementById('f');
-      Validacion.activar(f, {
-        reglas: {
-          p2: (v) => v !== document.getElementById('p1').value ? 'Las contraseñas no coinciden.' : null,
-          fn: (v) => v > new Date().toISOString().slice(0, 10) ? 'La fecha no puede ser futura.' : null
-        }
-      });
-
-      f.onsubmit = async e => {
-        e.preventDefault();
-        // ...lee los campos y hace el fetch igual que antes...
-        if (res.ok) {
-          window.location.href = 'login';
-        } else {
-          Validacion.mostrarError(document.getElementById('e'), data.error || 'Ocurrió un error al registrar.');
-        }
+      const v = cobertura.value;
+      const payload = {
+        names: $('n').value.trim(),
+        APS: $('a').value.trim(),
+        fechaNac: $('fn').value,
+        tel: $('t').value.trim(),
+        direction: $('d').value.trim(),
+        correo: $('e').value.trim(),
+        numSeguro: (v === 'seguro' || v === 'estado') ? $('np').value.trim() : '',
+        pass: $('p1').value
       };
+
       try {
         const res = await fetch(window.location.href, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            names,
-            APS,
-            fechaNac,
-            tel,
-            direction,
-            correo,
-            User: correo, // Se usa el correo como identificador de usuario
-            pass: p1
-          })
+          body: JSON.stringify(payload)
         });
-
         const data = await res.json();
 
         if (res.ok) {
           alert(data.mensaje || 'Registro exitoso.');
           window.location.href = 'login';
         } else {
-          alert(data.error || 'Ocurrió un error al registrar.');
+          Validacion.mostrarError($('e'), data.error || 'Ocurrió un error al registrar.');
         }
       } catch (err) {
         alert('Error de conexión con el servidor.');
       }
-    };
+    });
   </script>
 </body>
 
