@@ -58,7 +58,7 @@ $cone = null;
 try {
     $cone = BaseDatosFactory::pdo();
 } catch (Throwable $e) {
-    $error = 'No se pudo conectar a la base de datos.';
+    $error = 'No se pudo conectar a la base de datos.' . $e->getMessage();
     error_log('[login] ' . $e->getMessage());
 }
 

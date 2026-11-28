@@ -119,6 +119,8 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
             animation: slideInRight .3s cubic-bezier(.16, 1, .3, 1) forwards;
         }
     </style>
+    <link rel="stylesheet" href="css/tema.css">
+    <script src="JS/tema.js"></script>
 </head>
 
 <body x-data="portalPaciente()" class="min-h-screen flex flex-col antialiased">
@@ -150,6 +152,9 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
                     <button type="button" @click="openCancelModal()"
                         class="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:text-rose-600 hover:bg-rose-50/70">Cancelar
                         cita</button>
+                    <button type="button" @click="openConfigModal()"
+                        class="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:text-[#0284c7] hover:bg-slate-50">⚙
+                        Configuración</button>
                 </nav>
 
                 <div class="flex items-center gap-3">
@@ -191,15 +196,11 @@ $jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QU
             <button type="button" @click="openConfigModal()"
                 class="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:text-[#0284c7] hover:bg-slate-50">⚙
                 Configuración</button>
-            <button type="button" @click="mobileMenuOpen = false; openConfigModal();"
-                class="w-full px-4 py-3 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 text-left">⚙
-                Configuración</button>
             <a href="close.php"
                 class="block px-4 py-3 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50">Cerrar
                 sesión</a>
         </div>
-        <link rel="stylesheet" href="css/tema.css">
-        <script src="JS/tema.js"></script>
+
     </header>
 
     <!-- ================= CONTENIDO ================= -->

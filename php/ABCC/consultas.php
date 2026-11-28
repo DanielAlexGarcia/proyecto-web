@@ -11,7 +11,7 @@ header('Content-Type: application/json; charset=utf-8');
 
 $u = requerirSesionApi(['paciente', 'personal']);
 $cons = BaseDatosFactory::conexion();
-$conexion = $db->getConexion();
+$conexion = $cons->getConexion();
 
 $metodo = $_SERVER['REQUEST_METHOD'];
 $esAdmin = mb_strtolower(trim($u['cargo'] ?? ''), 'UTF-8') === 'administrador';

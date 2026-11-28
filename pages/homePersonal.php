@@ -239,12 +239,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         // 6. Función almacenada fn_citas_proximas
         elseif ($accion === 'consultar_fn_citas') {
+            $stmt = $pdo->prepare("SELECT fn_citas_proximas("
+                . BaseDatosFactory::tipado(':pac', 'int') . ", "
+                . BaseDatosFactory::tipado(':fecha', 'fecha') . ")");
             $stmt->execute([':pac' => (int) post('paciente_id'), ':fecha' => fechaSQL(post('fecha_consulta'))]);
             $resultadoFuncionCitas = (string) $stmt->fetchColumn();
         }
 
         // 7. Función almacenada fn_consultar_empleados
         elseif ($accion === 'consultar_fn_empleados') {
+            $stmt = $pdo->prepare("SELECT fn_consultar_empleados("
+                . BaseDatosFactory::tipado(':rol', 'texto') . ", "
+                . BaseDatosFactory::tipado(':esp', 'texto') . ")");
             $stmt->execute([':rol' => postNull('rol'), ':esp' => postNull('especialidad')]);
             $resultadoFuncionEmpleados = (string) $stmt->fetchColumn();
         }
@@ -610,7 +616,7 @@ $jsonAttr = JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG | JSON_U
             Cargo: <?= htmlspecialchars($empleadoActual['cargo']) ?>
             (<?= htmlspecialchars($empleadoActual['especializacion'] ?: 'General') ?>)
             <button type="button" class="btn-logout" style="background:#475569;border:none;cursor:pointer"
-                @click="abrirConfig()">⚙ Configuración</button></a>
+                @click="abrirConfig()">⚙ Configuración</button>
             <a href="close.php" class="btn-logout">Cerrar sesión</a>
         </div>
     </header>
